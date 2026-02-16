@@ -1,0 +1,44 @@
+{
+    "name": "@cordy/electro-generator",
+    "version": "0.1.0",
+    "description": "Code generator for @cordy/electro — scans features and emits preload scripts and bridge types",
+    "license": "MIT",
+    "type": "module",
+    "keywords": [
+        "electron",
+        "codegen",
+        "preload",
+        "bridge",
+        "typescript"
+    ],
+    "engines": {
+        "bun": ">=1.0.0"
+    },
+    "main": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs"
+        }
+    },
+    "scripts": {
+        "build": "tsdown",
+        "test": "vitest"
+    },
+    "peerDependencies": {
+        "@cordy/electro": "workspace:*"
+    },
+    "dependencies": {
+        "oxc-parser": "^0.112.0",
+        "tinyglobby": "^0.2.15"
+    },
+    "devDependencies": {
+        "@cordy/electro": "workspace:*",
+        "tsdown": "^0.20.3",
+        "vitest": "v4.1.0-beta.3"
+    }
+}

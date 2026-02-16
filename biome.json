@@ -1,0 +1,94 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "includes": ["**", "!dist", "!out", "!node_modules", "!**/*.gen.ts"]
+    },
+    "formatter": {
+        "enabled": true,
+        "lineWidth": 120,
+        "indentStyle": "space",
+        "indentWidth": 4
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "double",
+            "semicolons": "always",
+            "trailingCommas": "all"
+        }
+    },
+    "css": {
+        "linter": {
+            "enabled": true
+        },
+        "parser": {
+            "cssModules": true,
+            "tailwindDirectives": true
+        }
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "recommended": true,
+                "organizeImports": {
+                    "level": "on",
+                    "options": {
+                        "identifierOrder": "natural",
+                        "groups": [
+                            [":NODE:", ":BUN:"],
+                            [":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"],
+                            ["@main/**", "@pip/**", "@splash/**", "@shared/**", "~icons/**"],
+                            [":ALIAS:"],
+                            [":PATH:"]
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "correctness": {
+                "noUnusedImports": {
+                    "fix": "safe",
+                    "level": "error"
+                },
+                "noUnusedVariables": "warn",
+                "noUnusedPrivateClassMembers": "warn",
+                "useExhaustiveDependencies": "warn"
+            },
+            "security": {
+                "noBlankTarget": "error"
+            },
+            "style": {
+                "useImportType": {
+                    "level": "error",
+                    "fix": "safe",
+                    "options": {
+                        "style": "separatedType"
+                    }
+                },
+                "noNonNullAssertion": "off"
+            },
+            "suspicious": {
+                "noAssignInExpressions": "off",
+                "noEmptyInterface": "off",
+                "noExplicitAny": "warn"
+            },
+            "complexity": {
+                "noForEach": "warn",
+                "noStaticOnlyClass": "off"
+            },
+            "nursery": {
+                "noImportCycles": "error"
+            }
+        }
+    }
+}

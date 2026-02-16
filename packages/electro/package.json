@@ -1,0 +1,53 @@
+{
+    "name": "@cordy/electro",
+    "version": "0.1.0",
+    "description": "Electron framework \u2014 feature-first runtime, codegen, and Vite-based build system",
+    "license": "MIT",
+    "type": "module",
+    "keywords": [
+        "electron",
+        "vite",
+        "framework",
+        "desktop",
+        "esm",
+        "build-tool",
+        "codegen"
+    ],
+    "engines": {
+        "bun": ">=1.0.0"
+    },
+    "main": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs",
+            "default": "./dist/index.mjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "scripts": {
+        "build": "tsdown",
+        "build:watch": "tsdown --watch",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "croner": "^10.0.1"
+    },
+    "peerDependencies": {
+        "electron": ">=40.4.1"
+    },
+    "devDependencies": {
+        "electron": "^40.4.1",
+        "@types/node": "^25.2.3",
+        "@vitest/coverage-v8": "^4.1.0-beta.3",
+        "@vitest/ui": "v4.1.0-beta.3",
+        "es-toolkit": "https://github.com/MyraxByte/es-toolkit.git#feat/abort-timeout",
+        "tsdown": "^0.20.3",
+        "vitest": "v4.1.0-beta.3"
+    }
+}

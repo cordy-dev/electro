@@ -1,0 +1,20 @@
+{
+    "name": "electro-monorepo",
+    "private": true,
+    "workspaces": [
+        "packages/*",
+        "examples/*"
+    ],
+    "scripts": {
+        "build": "bun run --filter '@cordy/electro' build && bun run --filter '@cordy/electro-generator' build && bun run --filter '@cordy/electro-cli' build",
+        "build:watch": "bun run --filter '@cordy/electro' build:watch",
+        "test": "bun run --filter '@cordy/electro' test && bun run --filter '@cordy/electro-generator' test",
+        "lint": "biome lint",
+        "lint:fix": "biome check --fix --unsafe",
+        "fmt": "biome format --write",
+        "fmt:check": "biome format --check"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.0"
+    }
+}
