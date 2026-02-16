@@ -1,5 +1,6 @@
 # @cordy/electro
 
+> [!CAUTION]
 > **⚠️ Work in Progress** — This project is under active development and may contain bugs, incomplete features, or breaking changes.
 
 A feature-first Electron framework for Bun + Vite 8+. Provides a managed runtime kernel, codegen for preload/bridge types, and configuration via `defineConfig`/`defineRuntime`/`defineWindow`.
