@@ -11,4 +11,5 @@ export default defineConfig({
     outDir: "dist",
     shims: false,
     treeshake: true,
+    inlineOnly: false,
 });
