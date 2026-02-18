@@ -90,10 +90,29 @@ if (["patch", "minor", "major"].includes(versionArg)) {
 
 console.log(`\nReleasing: ${currentVersion} → ${nextVersion}${dryRun ? " (dry run)" : ""}\n`);
 
+// Collect workspace package names
+const workspaceNames = new Set<string>();
+for (const rel of PACKAGES) {
+    const { json } = await readPkg(rel);
+    workspaceNames.add(json.name as string);
+}
+
 // Update all package.json files
 for (const rel of PACKAGES) {
     const { path, json } = await readPkg(rel);
     json.version = nextVersion;
+
+    // Replace workspace:* refs in dependencies and peerDependencies with the new version
+    for (const field of ["dependencies", "peerDependencies"] as const) {
+        const deps = json[field] as Record<string, string> | undefined;
+        if (!deps) continue;
+        for (const [name, range] of Object.entries(deps)) {
+            if (range.startsWith("workspace:") && workspaceNames.has(name)) {
+                deps[name] = nextVersion;
+            }
+        }
+    }
+
     if (!dryRun) {
         await writePkg(path, json);
     }
