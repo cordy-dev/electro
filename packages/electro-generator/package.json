@@ -1,9 +1,10 @@
 {
     "name": "@cordy/electro-generator",
-    "version": "0.1.0",
-    "description": "Code generator for @cordy/electro — scans features and emits preload scripts and bridge types",
+    "version": "1.0.0",
+    "description": "Code generator for @cordy/electro \u2014 scans features and emits preload scripts and bridge types",
     "license": "MIT",
     "type": "module",
+    "sideEffects": false,
     "keywords": [
         "electron",
         "codegen",
@@ -11,6 +12,18 @@
         "bridge",
         "typescript"
     ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/cordy-dev/electro.git",
+        "directory": "packages/electro-generator"
+    },
+    "bugs": {
+        "url": "https://github.com/cordy-dev/electro/issues"
+    },
+    "homepage": "https://github.com/cordy-dev/electro#readme",
+    "publishConfig": {
+        "access": "public"
+    },
     "engines": {
         "bun": ">=1.0.0"
     },
@@ -27,13 +40,14 @@
     },
     "scripts": {
         "build": "tsdown",
-        "test": "vitest"
+        "test": "vitest",
+        "prepublishOnly": "bun run build"
     },
     "peerDependencies": {
         "@cordy/electro": "workspace:*"
     },
     "dependencies": {
-        "oxc-parser": "^0.112.0",
+        "oxc-parser": "^0.114.0",
         "tinyglobby": "^0.2.15"
     },
     "devDependencies": {

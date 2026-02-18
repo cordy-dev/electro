@@ -12,7 +12,9 @@
         "lint": "biome lint",
         "lint:fix": "biome check --fix --unsafe",
         "fmt": "biome format --write",
-        "fmt:check": "biome format --check"
+        "fmt:check": "biome format --check",
+        "release": "bun scripts/release.ts",
+        "publish:packages": "bun scripts/publish.ts"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.4.0"

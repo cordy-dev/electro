@@ -1,9 +1,10 @@
 {
     "name": "@cordy/electro-cli",
-    "version": "0.1.0",
-    "description": "CLI for @cordy/electro — dev server, build, and code generation commands",
+    "version": "1.0.0",
+    "description": "CLI for @cordy/electro \u2014 dev server, build, and code generation commands",
     "license": "MIT",
     "type": "module",
+    "sideEffects": false,
     "keywords": [
         "electron",
         "cli",
@@ -11,6 +12,18 @@
         "dev-server",
         "build-tool"
     ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/cordy-dev/electro.git",
+        "directory": "packages/electro-cli"
+    },
+    "bugs": {
+        "url": "https://github.com/cordy-dev/electro/issues"
+    },
+    "homepage": "https://github.com/cordy-dev/electro#readme",
+    "publishConfig": {
+        "access": "public"
+    },
     "engines": {
         "bun": ">=1.0.0"
     },
@@ -30,7 +43,8 @@
     },
     "scripts": {
         "build": "tsdown",
-        "electro": "bun src/index.ts"
+        "electro": "bun src/index.ts",
+        "prepublishOnly": "bun run build"
     },
     "peerDependencies": {
         "@cordy/electro": "workspace:*",

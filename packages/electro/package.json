@@ -1,9 +1,10 @@
 {
     "name": "@cordy/electro",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "Electron framework \u2014 feature-first runtime, codegen, and Vite-based build system",
     "license": "MIT",
     "type": "module",
+    "sideEffects": false,
     "keywords": [
         "electron",
         "vite",
@@ -13,6 +14,18 @@
         "build-tool",
         "codegen"
     ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/cordy-dev/electro.git",
+        "directory": "packages/electro"
+    },
+    "bugs": {
+        "url": "https://github.com/cordy-dev/electro/issues"
+    },
+    "homepage": "https://github.com/cordy-dev/electro#readme",
+    "publishConfig": {
+        "access": "public"
+    },
     "engines": {
         "bun": ">=1.0.0"
     },
@@ -33,7 +46,8 @@
     "scripts": {
         "build": "tsdown",
         "build:watch": "tsdown --watch",
-        "test": "vitest"
+        "test": "vitest",
+        "prepublishOnly": "bun run build"
     },
     "dependencies": {
         "croner": "^10.0.1"
@@ -44,7 +58,7 @@
     "devDependencies": {
         "electron": "^40.4.1",
         "@types/node": "^25.2.3",
-        "@vitest/coverage-v8": "^4.1.0-beta.3",
+        "@vitest/coverage-v8": "^4.1.0-beta.4",
         "@vitest/ui": "v4.1.0-beta.3",
         "es-toolkit": "https://github.com/MyraxByte/es-toolkit.git#feat/abort-timeout",
         "tsdown": "^0.20.3",
