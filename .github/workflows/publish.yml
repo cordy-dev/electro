@@ -40,12 +40,12 @@ jobs:
 
       - name: Publish @cordy/electro
         working-directory: packages/electro
-        run: npm publish --access public
+        run: bun publish --access public
 
       - name: Publish @cordy/electro-generator
         working-directory: packages/electro-generator
-        run: npm publish --access public
+        run: bun publish --access public
 
       - name: Publish @cordy/electro-cli
         working-directory: packages/electro-cli
-        run: npm publish --access public
+        run: bun publish --access public

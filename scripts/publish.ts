@@ -3,10 +3,8 @@
 /**
  * Publish script — builds, tests, and publishes all packages to npm in dependency order.
  *
- * Before publishing each package, resolves `workspace:*` references in
- * dependencies and peerDependencies to the actual package version so that
- * the published tarball contains real semver ranges. After publishing,
- * the original `workspace:*` references are restored.
+ * Uses `bun publish` which automatically resolves `workspace:*` references
+ * to real version numbers in the published tarball.
  *
  * Usage:
  *   bun scripts/publish.ts            # publish all packages
@@ -18,15 +16,12 @@
  *   - Or set NPM_TOKEN env var
  */
 
-import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 
 /** Packages in dependency order (leaf → dependents). */
 const PACKAGES = ["packages/electro", "packages/electro-generator", "packages/electro-cli"] as const;
-
-type PackageJson = Record<string, unknown>;
 
 function run(cmd: string[], opts?: { cwd?: string }): void {
     const cwd = opts?.cwd ?? root;
@@ -41,54 +36,6 @@ function run(cmd: string[], opts?: { cwd?: string }): void {
 function gitIsClean(): boolean {
     const result = Bun.spawnSync(["git", "status", "--porcelain"], { cwd: root });
     return result.stdout.toString().trim() === "";
-}
-
-/** Build a map of package name → version from all workspace packages. */
-async function buildVersionMap(): Promise<Map<string, string>> {
-    const map = new Map<string, string>();
-    for (const pkg of PACKAGES) {
-        const raw = await readFile(resolve(root, pkg, "package.json"), "utf-8");
-        const json = JSON.parse(raw);
-        map.set(json.name, json.version);
-    }
-    return map;
-}
-
-/** Replace `workspace:*` in deps/peerDeps with resolved versions. Returns the original content for restore. */
-async function patchWorkspaceRefs(pkgJsonPath: string, versionMap: Map<string, string>): Promise<string> {
-    const original = await readFile(pkgJsonPath, "utf-8");
-    const json: PackageJson = JSON.parse(original);
-
-    const depFields = ["dependencies", "peerDependencies"] as const;
-    let patched = false;
-
-    for (const field of depFields) {
-        const deps = json[field] as Record<string, string> | undefined;
-        if (!deps) continue;
-
-        for (const [name, range] of Object.entries(deps)) {
-            if (range.startsWith("workspace:")) {
-                const resolved = versionMap.get(name);
-                if (!resolved) {
-                    console.error(`Cannot resolve workspace reference: ${name}@${range}`);
-                    process.exit(1);
-                }
-                deps[name] = resolved;
-                patched = true;
-            }
-        }
-    }
-
-    if (patched) {
-        await writeFile(pkgJsonPath, `${JSON.stringify(json, null, 4)}\n`);
-        console.log(`  ✓ Patched workspace:* references in ${pkgJsonPath}`);
-    }
-
-    return original;
-}
-
-async function restoreFile(path: string, content: string): Promise<void> {
-    await writeFile(path, content);
 }
 
 // ── Main ──
@@ -111,32 +58,13 @@ run(["bun", "run", "build"]);
 console.log("\nRunning tests...\n");
 run(["bun", "run", "test"]);
 
-// 4. Build version map
-const versionMap = await buildVersionMap();
-console.log("\nVersion map:");
-for (const [name, version] of versionMap) {
-    console.log(`  ${name} → ${version}`);
-}
-
-// 5. Publish in dependency order
+// 4. Publish in dependency order
 console.log("\nPublishing...\n");
 for (const pkg of PACKAGES) {
     const cwd = resolve(root, pkg);
-    const pkgJsonPath = resolve(cwd, "package.json");
-
-    // Patch workspace:* → real versions
-    const original = await patchWorkspaceRefs(pkgJsonPath, versionMap);
-
-    try {
-        const cmd = ["bun", "publish", "--access", "public"];
-        if (dryRun) cmd.push("--dry-run");
-        run(cmd, { cwd });
-    } finally {
-        // Always restore original package.json
-        await restoreFile(pkgJsonPath, original);
-        console.log(`  ✓ Restored ${pkgJsonPath}`);
-    }
-
+    const cmd = ["bun", "publish", "--access", "public"];
+    if (dryRun) cmd.push("--dry-run");
+    run(cmd, { cwd });
     console.log("");
 }
 
