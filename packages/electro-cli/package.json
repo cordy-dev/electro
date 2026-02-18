@@ -1,7 +1,7 @@
 {
     "name": "@cordy/electro-cli",
-    "version": "1.0.3",
-    "description": "CLI for @cordy/electro \u2014 dev server, build, and code generation commands",
+    "version": "1.0.4",
+    "description": "CLI for @cordy/electro — dev server, build, and code generation commands",
     "license": "MIT",
     "type": "module",
     "sideEffects": false,
