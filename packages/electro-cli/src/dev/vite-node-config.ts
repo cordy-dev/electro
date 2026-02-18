@@ -80,7 +80,7 @@ export function createNodeConfig(opts: NodeConfigOptions): InlineConfig {
 
         ssr: {
             target: "node",
-            noExternal: [],
+            noExternal: ["@cordy/electro"],
         },
 
         resolve: {

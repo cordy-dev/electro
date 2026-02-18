@@ -18,6 +18,9 @@ export async function resolveExternals(root: string): Promise<(string | RegExp)[
         ...Object.keys(pkg.optionalDependencies ?? {}),
     ]);
 
+    // @cordy/electro must be bundled — it relies on compile-time `define` replacements
+    deps.delete("@cordy/electro");
+
     // Node builtins: both bare (fs) and prefixed (node:fs)
     const builtins = builtinModules.flatMap((m) => [m, `node:${m}`]);
 
