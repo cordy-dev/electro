@@ -55,10 +55,7 @@ async function buildVersionMap(): Promise<Map<string, string>> {
 }
 
 /** Replace `workspace:*` in deps/peerDeps with resolved versions. Returns the original content for restore. */
-async function patchWorkspaceRefs(
-    pkgJsonPath: string,
-    versionMap: Map<string, string>,
-): Promise<string> {
+async function patchWorkspaceRefs(pkgJsonPath: string, versionMap: Map<string, string>): Promise<string> {
     const original = await readFile(pkgJsonPath, "utf-8");
     const json: PackageJson = JSON.parse(original);
 
