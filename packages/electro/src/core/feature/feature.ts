@@ -135,7 +135,6 @@ export class Feature<FId extends FeatureId> {
         for (const service of this.config.services ?? []) {
             this.serviceManager.register(service);
         }
-        this.serviceManager.startup();
 
         // build dependency map for cross-feature service access
         const deps = new Map<string, ServiceManager>();
@@ -145,8 +144,11 @@ export class Feature<FId extends FeatureId> {
             }
         }
 
+        // wire getService before startup so service api() can resolve sibling services
         const accessor = new ServiceAccessor(this.serviceManager, deps);
         this.context.getService = ((name: string) => accessor.get(name)) as FeatureContext<any>["getService"];
+
+        this.serviceManager.startup();
 
         // build tasks context
         this.taskManager = new TaskManager(this.context);

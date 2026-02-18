@@ -34,18 +34,18 @@ jobs:
         run: bun run test
 
       - name: Setup npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "${{ github.workspace }}/.npmrc"
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @cordy/electro
         working-directory: packages/electro
-        run: bun publish --access public
+        run: npm publish --access public
 
       - name: Publish @cordy/electro-generator
         working-directory: packages/electro-generator
-        run: bun publish --access public
+        run: npm publish --access public
 
       - name: Publish @cordy/electro-cli
         working-directory: packages/electro-cli
-        run: bun publish --access public
+        run: npm publish --access public
