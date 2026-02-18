@@ -1,6 +1,6 @@
 {
     "name": "@cordy/electro",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "Electron framework — feature-first runtime, codegen, and Vite-based build system",
     "license": "MIT",
     "type": "module",
