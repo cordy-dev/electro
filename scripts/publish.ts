@@ -18,11 +18,7 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 
 /** Packages in dependency order (leaf → dependents). */
-const PACKAGES = [
-    "packages/electro",
-    "packages/electro-generator",
-    "packages/electro-cli",
-] as const;
+const PACKAGES = ["packages/electro", "packages/electro-generator", "packages/electro-cli"] as const;
 
 function run(cmd: string[], opts?: { cwd?: string }): void {
     const cwd = opts?.cwd ?? root;

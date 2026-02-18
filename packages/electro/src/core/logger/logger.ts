@@ -24,12 +24,7 @@ export class Logger implements LoggerContext {
         this.emit("error", code, message, details);
     }
 
-    private emit(
-        level: LogEntry["level"],
-        code: string,
-        message: string,
-        details?: Record<string, unknown>,
-    ): void {
+    private emit(level: LogEntry["level"], code: string, message: string, details?: Record<string, unknown>): void {
         const entry: LogEntry = { level, code, message, details, timestamp: Date.now() };
         for (const handler of this.handlers) {
             handler(entry);

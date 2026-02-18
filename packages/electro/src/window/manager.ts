@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import type { BaseWindow } from "electron";
 import type { WindowDefinition } from "../config/types";
 import type { ElectroWindow, WindowFactory, WindowInfo } from "./types";
 

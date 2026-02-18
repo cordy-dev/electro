@@ -1,7 +1,7 @@
 import { dirname, resolve } from "node:path";
+import type { WindowDefinition } from "@cordy/electro";
 import type { InlineConfig, Logger, UserConfig } from "vite";
 import { mergeConfig } from "vite";
-import type { WindowDefinition } from "@cordy/electro";
 
 export interface RendererConfigOptions {
     /** Project root */

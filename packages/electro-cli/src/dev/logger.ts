@@ -1,6 +1,6 @@
 import { basename, relative } from "node:path";
-import { createLogger as viteCreateLogger } from "vite";
 import type { Logger, LogLevel as ViteLogLevel } from "vite";
+import { createLogger as viteCreateLogger } from "vite";
 
 // ── ANSI constants ──────────────────────────────────────────────────
 
@@ -161,8 +161,8 @@ export function session(meta: SessionMeta): void {
     const isBuild = meta.mode === "build";
     const projectName = basename(meta.root);
     const mainEntry = toProjectRelative(meta.root, meta.main);
-    const preloadEntry = meta.preload ? toProjectRelative(meta.root, meta.preload) : dim + "(none)" + reset;
-    const rendererEntry = meta.renderer ? toProjectRelative(meta.root, meta.renderer) : dim + "(none)" + reset;
+    const preloadEntry = meta.preload ? toProjectRelative(meta.root, meta.preload) : `${dim}(none)${reset}`;
+    const rendererEntry = meta.renderer ? toProjectRelative(meta.root, meta.renderer) : `${dim}(none)${reset}`;
 
     const command = isBuild ? "build" : "dev";
     console.log(`\n${bold}${yellow}⚡ electro ${command}${reset} → ${cyan}${projectName}${reset}\n`);

@@ -1,12 +1,12 @@
 import type { WindowDefinition } from "../../config/types";
 import { createDefaultWindowFactory } from "../../window/default-factory";
 import { WindowManager } from "../../window/manager";
-import { createConsoleHandler } from "../logger/console-handler";
-import { Logger } from "../logger/logger";
 import { EventBus } from "../event-bus/event-bus";
 import { FeatureStatus } from "../feature/enums";
 import { FeatureManager } from "../feature/manager";
 import type { FeatureConfig, FeatureId } from "../feature/types";
+import { createConsoleHandler } from "../logger/console-handler";
+import { Logger } from "../logger/logger";
 import { StateMachine } from "../state-machine/state-machine";
 import { RuntimeState } from "./enums";
 import type { RuntimeConfig } from "./types";

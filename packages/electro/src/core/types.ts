@@ -1,6 +1,5 @@
-import type { BaseWindow } from "electron";
-import type { TaskHandle } from "./task/handle";
 import type { ElectroWindow } from "../window/types";
+import type { TaskHandle } from "./task/handle";
 
 /**
  * Declaration-merging registry.
@@ -175,7 +174,7 @@ export type TypedContext<
     events: {
         publish<K extends _OwnEventKeys<FId>>(
             event: K,
-            ...args: void extends _ResolveOwnEvent<FId, K>
+            ...args: undefined extends _ResolveOwnEvent<FId, K>
                 ? [payload?: _ResolveOwnEvent<FId, K>]
                 : [payload: _ResolveOwnEvent<FId, K>]
         ): void;

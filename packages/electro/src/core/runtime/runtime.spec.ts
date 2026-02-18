@@ -12,8 +12,8 @@
  *   8. State guards (illegal operations)
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LogEntry } from "../logger/types";
 import { createFeature } from "../feature/helpers";
+import type { LogEntry } from "../logger/types";
 import { RuntimeState } from "./enums";
 import { createRuntime } from "./helpers";
 

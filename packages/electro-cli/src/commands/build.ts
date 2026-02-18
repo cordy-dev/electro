@@ -1,31 +1,21 @@
 import { mkdir, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+import type { ElectroConfig } from "@cordy/electro";
+import { generate, scan } from "@cordy/electro-generator";
 import type { Plugin } from "vite";
 import { build as viteBuild, version as viteVersion } from "vite";
-import { generate } from "@cordy/electro-generator";
-import { scan } from "@cordy/electro-generator";
-import type { ElectroConfig } from "@cordy/electro";
+import { loadConfig } from "../dev/config-loader";
+import { resolveExternals } from "../dev/externals";
+import type { SessionMeta } from "../dev/logger";
+import { buildScope, createBuildLogger, footer, session, setLogLevel, startTimer, step, stepFail } from "../dev/logger";
+import { createNodeConfig } from "../dev/vite-node-config";
+import { createRendererConfig } from "../dev/vite-renderer-config";
 import { assetPlugin } from "../plugins/asset";
 import { bytecodePlugin } from "../plugins/bytecode";
 import { isolateEntriesPlugin } from "../plugins/isolate-entries";
 import { modulePathPlugin } from "../plugins/module-path";
 import { workerPlugin } from "../plugins/worker";
 import { validateSourcemap, validateViteVersion } from "../validate";
-import { loadConfig } from "../dev/config-loader";
-import { resolveExternals } from "../dev/externals";
-import type { SessionMeta } from "../dev/logger";
-import {
-    buildScope,
-    createBuildLogger,
-    footer,
-    session,
-    setLogLevel,
-    startTimer,
-    step,
-    stepFail,
-} from "../dev/logger";
-import { createNodeConfig } from "../dev/vite-node-config";
-import { createRendererConfig } from "../dev/vite-renderer-config";
 
 interface BuildOptions {
     config: string;
@@ -212,12 +202,7 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
         externals: args.externals,
         outDir: resolve(args.outDir, "main"),
         watch: false,
-        plugins: [
-            assetPlugin(),
-            workerPlugin(),
-            modulePathPlugin(),
-            ...(args.bytecode ? [bytecodePlugin()] : []),
-        ],
+        plugins: [assetPlugin(), workerPlugin(), modulePathPlugin(), ...(args.bytecode ? [bytecodePlugin()] : [])],
         userViteConfig: args.config.runtime.vite,
         sourcemap: args.sourcemap,
         customLogger: args.logger,
@@ -329,14 +314,11 @@ async function flattenRendererOutput(
         const depthDiff = oldDepth - newDepth;
 
         if (depthDiff > 0) {
-            html = html.replace(
-                /(["'(])((?:\.\.\/)+)/g,
-                (_, prefix: string, dots: string) => {
-                    const levels = (dots.match(/\.\.\//g) || []).length;
-                    const adjusted = Math.max(0, levels - depthDiff);
-                    return prefix + (adjusted > 0 ? "../".repeat(adjusted) : "./");
-                },
-            );
+            html = html.replace(/(["'(])((?:\.\.\/)+)/g, (_, prefix: string, dots: string) => {
+                const levels = (dots.match(/\.\.\//g) || []).length;
+                const adjusted = Math.max(0, levels - depthDiff);
+                return prefix + (adjusted > 0 ? "../".repeat(adjusted) : "./");
+            });
         }
 
         await mkdir(dirname(newHtmlPath), { recursive: true });

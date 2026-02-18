@@ -14,13 +14,13 @@ export function createDefaultWindowFactory(): WindowFactory {
                 const { BrowserWindow } = require("electron") as typeof import("electron");
                 return new BrowserWindow({
                     show: definition.autoShow ?? false,
-                    ...(definition.window as Record<string, unknown> ?? {}),
+                    ...((definition.window as Record<string, unknown>) ?? {}),
                 });
             }
             const { BaseWindow: BW } = require("electron") as typeof import("electron");
             return new BW({
                 show: definition.autoShow ?? false,
-                ...(definition.window as Record<string, unknown> ?? {}),
+                ...((definition.window as Record<string, unknown>) ?? {}),
             });
         },
     };

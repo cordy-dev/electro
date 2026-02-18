@@ -1,11 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
-import type { Plugin, ViteDevServer } from "vite";
-import { createServer, version as viteVersion, build as viteBuild } from "vite";
-import { generate } from "@cordy/electro-generator";
-import { scan } from "@cordy/electro-generator";
-import type { ScanResult } from "@cordy/electro-generator";
 import type { ElectroConfig } from "@cordy/electro";
+import type { ScanResult } from "@cordy/electro-generator";
+import { generate, scan } from "@cordy/electro-generator";
+import type { Plugin, ViteDevServer } from "vite";
+import { createServer, build as viteBuild, version as viteVersion } from "vite";
 import { assetPlugin } from "../plugins/asset";
 import { isolateEntriesPlugin } from "../plugins/isolate-entries";
 import { modulePathPlugin } from "../plugins/module-path";

@@ -60,7 +60,10 @@ describe("FeatureManager", () => {
             const mgr = createMgr(logger);
             mgr.register(createFeature({ id: "dup" }));
             mgr.register(createFeature({ id: "dup" }));
-            expect(logger.warn).toHaveBeenCalledWith("FeatureManager", 'Feature "dup" is already registered. Skipping.');
+            expect(logger.warn).toHaveBeenCalledWith(
+                "FeatureManager",
+                'Feature "dup" is already registered. Skipping.',
+            );
             // Only one feature instance exists
             expect(mgr.get("dup")).toBeDefined();
         });

@@ -14,8 +14,6 @@ export type {
     WindowLifecycle,
     WindowType,
 } from "./config/types";
-// ── Logger ──────────────────────────────────────────────────────────
-export type { LogEntry, LogHandler } from "./core/logger/types";
 // ── Events ──────────────────────────────────────────────────────────
 export { EventAccessor } from "./core/event-bus/accessor";
 export { createEvent } from "./core/event-bus/helpers";
@@ -25,6 +23,8 @@ export type { FeatureHandle } from "./core/feature/handle";
 // ── Feature ─────────────────────────────────────────────────────────
 export { createFeature } from "./core/feature/helpers";
 export type { FeatureConfig, FeatureContext, FeatureId } from "./core/feature/types";
+// ── Logger ──────────────────────────────────────────────────────────
+export type { LogEntry, LogHandler } from "./core/logger/types";
 export { RuntimeState } from "./core/runtime/enums";
 // ── Runtime (kernel) ────────────────────────────────────────────────
 export { createRuntime } from "./core/runtime/helpers";
@@ -49,8 +49,8 @@ export type {
 // ── Type registries (populated by codegen via declaration merging) ──
 export type {
     BaseContext,
-    LoggerContext,
     FeatureMap,
+    LoggerContext,
     ServiceOwnerMap,
     TaskOwnerMap,
     TypedContext,
@@ -58,7 +58,7 @@ export type {
 } from "./core/types";
 // ── Policy ──────────────────────────────────────────────────────────
 export { PolicyEngine } from "./policy/engine";
-export { PolicyDecision } from "./policy/types";
 export type { PolicyResult } from "./policy/types";
+export { PolicyDecision } from "./policy/types";
 // ── Window ──────────────────────────────────────────────────────────
 export type { ElectroWindow, WindowFactory, WindowInfo } from "./window/types";

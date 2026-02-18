@@ -8,9 +8,7 @@ export type FeatureContext<
     FId extends FeatureId = string,
     ExcludeSvc extends string = never,
     ExcludeTask extends string = never,
-> = FId extends keyof FeatureMap
-    ? TypedContext<FId, ExcludeSvc, ExcludeTask>
-    : BaseContext;
+> = FId extends keyof FeatureMap ? TypedContext<FId, ExcludeSvc, ExcludeTask> : BaseContext;
 
 /** Suggest known feature IDs while accepting arbitrary strings. */
 type SuggestFeatureIds = (keyof FeatureMap & string) | (string & {});

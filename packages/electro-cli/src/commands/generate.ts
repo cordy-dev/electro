@@ -1,8 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { generate as generateFiles } from "@cordy/electro-generator";
-import { scan } from "@cordy/electro-generator";
 import type { ElectroConfig } from "@cordy/electro";
+import { generate as generateFiles, scan } from "@cordy/electro-generator";
 
 interface GenerateOptions {
     config: string;

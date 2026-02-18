@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import { defineWindow } from "@cordy/electro";
+import { describe, expect, it, vi } from "vitest";
 import { generate } from "./generator";
 import type { ScanResult } from "./types";
 
@@ -113,7 +113,10 @@ describe("generate()", () => {
 
         // 1 preload + 1 bridge types
         expect(files).toHaveLength(2);
-        expect(files.map((f) => f.path)).toEqual(["generated/preload/main.gen.ts", "generated/windows/main.bridge.d.ts"]);
+        expect(files.map((f) => f.path)).toEqual([
+            "generated/preload/main.gen.ts",
+            "generated/windows/main.bridge.d.ts",
+        ]);
         expect(envTypes.path).toBe("electro-env.d.ts");
     });
 

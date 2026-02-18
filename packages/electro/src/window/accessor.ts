@@ -1,5 +1,5 @@
-import type { ElectroWindow } from "./types";
 import type { WindowManager } from "./manager";
+import type { ElectroWindow } from "./types";
 
 /**
  * Thin accessor bound to FeatureContext.
