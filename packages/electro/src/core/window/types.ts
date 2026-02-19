@@ -13,10 +13,10 @@ export interface CreatedWindow<TApi = void> {
     readonly id: WindowId;
     /** Create the BaseWindow. Idempotent: returns existing if alive. */
     create(): BaseWindow;
-    /** Return the live BaseWindow, or null if not yet created / destroyed. */
-    window(): BaseWindow | null;
-    /** Return the typed API, or null if not yet created / destroyed. */
-    api(): TApi | null;
+    /** The live BaseWindow, or null if not yet created / destroyed. */
+    readonly window: BaseWindow | null;
+    /** The typed API, or null if not yet created / destroyed. */
+    readonly api: TApi | null;
     /** Destroy the BaseWindow and clear refs. */
     destroy(): void;
 }
@@ -25,7 +25,7 @@ export interface CreatedWindow<TApi = void> {
 export interface WindowInstance {
     readonly id: WindowId;
     create(): BaseWindow;
-    window(): BaseWindow | null;
-    api(): unknown;
+    readonly window: BaseWindow | null;
+    readonly api: unknown;
     destroy(): void;
 }

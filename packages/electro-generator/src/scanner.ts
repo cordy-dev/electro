@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs";
 import type { CallExpression, VariableDeclarator } from "oxc-parser";
 import { parseSync, Visitor } from "oxc-parser";
-import type { ScannedEvent, ScannedFeature, ScannedService, ScannedTask, ScanResult } from "./types";
+import type { ScannedEvent, ScannedFeature, ScannedService, ScannedTask, ScannedWindow, ScanResult } from "./types";
 
 // ── File filtering ──────────────────────────────────────────────────
 
@@ -386,6 +386,52 @@ function extractEvents(program: ASTNode, filePath: string, exportedNames: Set<st
     return events;
 }
 
+// ── Window scanning ────────────────────────────────────────────────
+
+interface PendingWindow {
+    varName: string;
+    window: ScannedWindow;
+}
+
+/**
+ * Extract createWindow() calls from a file.
+ * Uses VariableDeclarator to capture `const x = createWindow({...})` patterns.
+ */
+function extractWindows(program: ASTNode, filePath: string, exportedNames: Set<string>): PendingWindow[] {
+    const windows: PendingWindow[] = [];
+
+    const visitor = new Visitor({
+        VariableDeclarator(node: VariableDeclarator) {
+            const init = node.init as ASTNode | null;
+            if (!init || init.type !== "CallExpression") return;
+
+            const callee = init.callee as ASTNode;
+            if (callee.type !== "Identifier" || callee.name !== "createWindow") return;
+
+            const args = init.arguments as ASTNode[];
+            if (args.length < 1 || args[0].type !== "ObjectExpression") return;
+            const config = args[0];
+
+            const id = getStringLiteral(getObjectProperty(config, "id"));
+            if (!id) {
+                console.warn(`[scanner] Skipping createWindow() with non-literal id in ${filePath}`);
+                return;
+            }
+
+            const idNode = node.id as ASTNode;
+            const varName = idNode.type === "Identifier" && typeof idNode.name === "string" ? idNode.name : id;
+
+            windows.push({
+                varName,
+                window: { id, varName, filePath, exported: exportedNames.has(varName) },
+            });
+        },
+    });
+
+    visitor.visit(program as Parameters<typeof visitor.visit>[0]);
+    return windows;
+}
+
 // ── Feature scanning ────────────────────────────────────────────────
 
 interface RawFeature {
@@ -494,10 +540,11 @@ async function discoverFiles(basePath: string): Promise<string[]> {
 export async function scan(basePath: string): Promise<ScanResult> {
     const files = await discoverFiles(basePath);
 
-    // Phase 1: Parse all files, collect services, tasks, events, and features
+    // Phase 1: Parse all files, collect services, tasks, events, windows, and features
     const allServices: PendingService[] = [];
     const allTasks: PendingTask[] = [];
     const allEvents: PendingEvent[] = [];
+    const allWindows: PendingWindow[] = [];
     const allFeatures: RawFeature[] = [];
 
     for (const filePath of files) {
@@ -515,11 +562,13 @@ export async function scan(basePath: string): Promise<ScanResult> {
         const services = extractServices(program, filePath, exportedNames);
         const tasks = extractTasks(program, filePath, exportedNames);
         const events = extractEvents(program, filePath, exportedNames);
+        const windows = extractWindows(program, filePath, exportedNames);
         const features = extractFeatures(program, filePath);
 
         allServices.push(...services);
         allTasks.push(...tasks);
         allEvents.push(...events);
+        allWindows.push(...windows);
         allFeatures.push(...features);
     }
 
@@ -588,5 +637,8 @@ export async function scan(basePath: string): Promise<ScanResult> {
         };
     });
 
-    return { features: scannedFeatures };
+    // Collect scanned windows (global, not feature-owned)
+    const scannedWindows: ScannedWindow[] = allWindows.map((pw) => pw.window);
+
+    return { features: scannedFeatures, windows: scannedWindows };
 }

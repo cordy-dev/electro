@@ -626,4 +626,52 @@ describe("scan()", () => {
         expect(warn).toHaveBeenCalledWith(expect.stringContaining("non-literal id"));
         warn.mockRestore();
     });
+
+    // ── Window scanning ────────────────────────────────────────────
+
+    it("discovers createWindow() calls", async () => {
+        const result = await scanFixture({
+            "windows.ts": `
+                export const splashWindow = createWindow({ id: "splash", options: {} });
+                export const mainWindow = createWindow({ id: "main", options: {} });
+            `,
+        });
+        expect(result.windows).toHaveLength(2);
+        expect(result.windows[0].id).toBe("splash");
+        expect(result.windows[0].varName).toBe("splashWindow");
+        expect(result.windows[0].exported).toBe(true);
+        expect(result.windows[1].id).toBe("main");
+    });
+
+    it("detects non-exported windows", async () => {
+        const result = await scanFixture({
+            "windows.ts": `const win = createWindow({ id: "hidden", options: {} });`,
+        });
+        expect(result.windows).toHaveLength(1);
+        expect(result.windows[0].exported).toBe(false);
+    });
+
+    it("skips createWindow with non-literal id", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const result = await scanFixture({
+            "windows.ts": `const win = createWindow({ id: dynamicId, options: {} });`,
+        });
+        expect(result.windows).toEqual([]);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("non-literal id"));
+        warn.mockRestore();
+    });
+
+    it("returns empty windows when none exist", async () => {
+        const result = await scanFixture({
+            "feat.ts": `createFeature({ id: "f", dependencies: [] });`,
+        });
+        expect(result.windows).toEqual([]);
+    });
+
+    it("includes filePath on scanned windows", async () => {
+        const result = await scanFixture({
+            "win.ts": `export const w = createWindow({ id: "test", options: {} });`,
+        });
+        expect(result.windows[0].filePath).toContain("win.ts");
+    });
 });

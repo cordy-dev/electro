@@ -28,6 +28,13 @@ export interface ScannedEvent {
     exported: boolean;
 }
 
+export interface ScannedWindow {
+    id: string;
+    varName: string;
+    filePath: string;
+    exported: boolean;
+}
+
 export interface ScannedFeature {
     id: string;
     filePath: string;
@@ -40,6 +47,7 @@ export interface ScannedFeature {
 
 export interface ScanResult {
     features: ScannedFeature[];
+    windows: ScannedWindow[];
 }
 
 export interface GeneratedFile {

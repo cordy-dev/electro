@@ -8,7 +8,7 @@
 import { dirname, join, relative } from "node:path";
 import type { ViewDefinition } from "@cordy/electro";
 import { PolicyEngine } from "@cordy/electro";
-import type { GeneratedFile, ScannedFeature, ScanResult } from "./types";
+import type { GeneratedFile, ScannedFeature, ScannedWindow, ScanResult } from "./types";
 
 // ── Constants ───────────────────────────────────────────────────────
 
@@ -160,6 +160,7 @@ export {};
 type _SvcApi<T> = T extends { api(): infer R } ? NonNullable<R> : never;
 type _TaskPayload<T> = T extends { start(payload?: infer P): any } ? P : void;
 type _EventPayload<T> = T extends { payload(): infer P } ? P : unknown;
+type _WinApi<T> = T extends import("@cordy/electro").CreatedWindow<infer A> ? A : void;
 `;
 
 /**
@@ -177,10 +178,31 @@ function generateViewTypes(views: readonly ViewDefinition[]): string {
     return `\n    interface ViewMap {\n${entries.join("\n")}\n    }\n`;
 }
 
+/**
+ * Generate WindowApiMap entries for all scanned createWindow() calls.
+ * Uses _WinApi utility type to extract the typed API from CreatedWindow<TApi>.
+ */
+function generateWindowApiTypes(windows: readonly ScannedWindow[], srcDir: string): string {
+    if (windows.length === 0) return "";
+
+    const entries: string[] = [];
+    for (const win of windows) {
+        if (win.exported) {
+            const importPath = toImportPath(srcDir, win.filePath);
+            entries.push(`        "${win.id}": _WinApi<typeof import("${importPath}").${win.varName}>;`);
+        } else {
+            entries.push(`        "${win.id}": unknown;`);
+        }
+    }
+
+    return `\n    interface WindowApiMap {\n${entries.join("\n")}\n    }\n`;
+}
+
 function generateFeatureTypes(
     features: ScannedFeature[],
     srcDir: string,
     views: readonly ViewDefinition[],
+    windows: readonly ScannedWindow[],
 ): GeneratedFile {
     const seenFeatures = new Set<string>();
     const featureBlocks: string[] = [];
@@ -280,6 +302,7 @@ function generateFeatureTypes(
     const svcOwnerBody = svcOwnerEntries.length > 0 ? `{\n${svcOwnerEntries.join("\n")}\n    }` : "{}";
     const taskOwnerBody = taskOwnerEntries.length > 0 ? `{\n${taskOwnerEntries.join("\n")}\n    }` : "{}";
     const viewMapBlock = generateViewTypes(views);
+    const windowApiMapBlock = generateWindowApiTypes(windows, srcDir);
 
     const content = `${FEATURE_TYPES_HEADER}
 declare module "@cordy/electro" {
@@ -288,7 +311,7 @@ declare module "@cordy/electro" {
     interface ServiceOwnerMap ${svcOwnerBody}
 
     interface TaskOwnerMap ${taskOwnerBody}
-${viewMapBlock}}
+${viewMapBlock}${windowApiMapBlock}}
 `;
 
     return { path: "electro-env.d.ts", content };
@@ -333,7 +356,7 @@ export function generate(input: GeneratorInput): GeneratorOutput {
         files.push(generateBridgeTypes(view.name, scanResult.features, policy));
     }
 
-    const envTypes = generateFeatureTypes(scanResult.features, srcDir, views);
+    const envTypes = generateFeatureTypes(scanResult.features, srcDir, views, scanResult.windows ?? []);
 
     return { files, envTypes };
 }

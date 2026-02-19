@@ -36,7 +36,7 @@ export class Window<TApi = void> {
         return this._window;
     }
 
-    window(): BaseWindow | null {
+    get window(): BaseWindow | null {
         if (this._window?.isDestroyed()) {
             this._window = null;
             this._api = null;
@@ -44,7 +44,7 @@ export class Window<TApi = void> {
         return this._window;
     }
 
-    api(): TApi | null {
+    get api(): TApi | null {
         if (this._window?.isDestroyed()) {
             this._window = null;
             this._api = null;
