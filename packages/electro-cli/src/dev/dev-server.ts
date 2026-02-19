@@ -175,13 +175,15 @@ export class DevServer {
         }
 
         // 4. Resolve externals
-        const externals = await resolveExternals(this.root);
+        const resolvedExternals = await resolveExternals(this.root);
+        const externals = resolvedExternals.externals;
+        const cjsInteropDeps = resolvedExternals.cjsInteropDeps;
 
         // 5. Build preload (watch mode)
         if (views.length > 0) {
             const preloadTimer = startTimer();
             try {
-                await this.buildPreload(externals);
+                await this.buildPreload(externals, cjsInteropDeps);
                 step("preload", preloadTimer());
             } catch (err) {
                 stepFail("preload", err instanceof Error ? err.message : String(err));
@@ -192,7 +194,7 @@ export class DevServer {
         // 6. Build main (watch mode)
         const mainBuildTimer = startTimer();
         try {
-            await this.buildMain(externals);
+            await this.buildMain(externals, cjsInteropDeps);
             step("main", mainBuildTimer());
         } catch (err) {
             stepFail("main", err instanceof Error ? err.message : String(err));
@@ -309,7 +311,7 @@ export class DevServer {
         this.rendererUrl = `http://localhost:${portNum}`;
     }
 
-    private async buildPreload(externals: (string | RegExp)[]): Promise<void> {
+    private async buildPreload(externals: (string | RegExp)[], cjsInteropDeps: string[]): Promise<void> {
         const views = (this.config!.views ?? []).filter((v) => v.entry);
         const preloadOutDir = resolve(this.outputDir, "preload");
 
@@ -332,6 +334,7 @@ export class DevServer {
             clearScreen: this.clearScreen,
             sourcemap: this.sourcemap,
             format: this.nodeFormat,
+            cjsInteropDeps,
         });
 
         if (Object.keys(input).length > 1) {
@@ -347,6 +350,7 @@ export class DevServer {
                 clearScreen: this.clearScreen,
                 sourcemap: this.sourcemap,
                 format: this.nodeFormat,
+                cjsInteropDeps,
             });
             (baseConfig.plugins as Plugin[]).push(isolateEntriesPlugin(subBuildConfig));
         }
@@ -384,7 +388,7 @@ export class DevServer {
         this.preloadWatch = watcher as { close(): void };
     }
 
-    private async buildMain(externals: (string | RegExp)[]): Promise<void> {
+    private async buildMain(externals: (string | RegExp)[], cjsInteropDeps: string[]): Promise<void> {
         const runtimeEntry = this.config!.runtime.entry;
         const sourceDir = dirname(this.config!.runtime.__source);
         const entry = resolve(sourceDir, runtimeEntry);
@@ -415,6 +419,7 @@ export class DevServer {
             userViteConfig: this.config!.runtime.vite,
             sourcemap: this.sourcemap,
             format: this.nodeFormat,
+            cjsInteropDeps,
             define: {
                 __ELECTRO_VIEW_REGISTRY__: JSON.stringify(viewRegistry),
             },

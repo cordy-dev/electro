@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import type { InlineConfig, Logger, Plugin, UserConfig } from "vite";
 import { mergeConfig } from "vite";
 import type { NodeOutputFormat } from "./node-format";
+import { cjsExternalInteropPlugin } from "../plugins/cjs-external-interop";
 import { esmShimPlugin } from "../plugins/esm-shim";
 import { importMetaPlugin } from "../plugins/import-meta";
 import { enforceMergedNodeConfig, validateMergedNodeConfig } from "../validate";
@@ -36,6 +37,8 @@ export interface NodeConfigOptions {
     customLogger?: Logger;
     /** Output module format for Node scopes */
     format?: NodeOutputFormat;
+    /** External dependency names that require CJS named-import interop in ESM output */
+    cjsInteropDeps?: string[];
 }
 
 function resolveSourcemap(mode?: string): boolean | "inline" | "hidden" {
@@ -56,7 +59,12 @@ export function createNodeConfig(opts: NodeConfigOptions): InlineConfig {
     const config: InlineConfig = {
         configFile: false,
         root: opts.root,
-        plugins: [importMetaPlugin(), ...(opts.plugins ?? []), esmShimPlugin()],
+        plugins: [
+            importMetaPlugin(),
+            ...(opts.plugins ?? []),
+            cjsExternalInteropPlugin(opts.cjsInteropDeps ?? []),
+            esmShimPlugin(),
+        ],
         customLogger: opts.customLogger,
         envPrefix,
 

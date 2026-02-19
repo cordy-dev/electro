@@ -99,7 +99,9 @@ export async function build(options: BuildOptions): Promise<void> {
     }
 
     // 5. Resolve externals
-    const externals = await resolveExternals(root);
+    const resolvedExternals = await resolveExternals(root);
+    const externals = resolvedExternals.externals;
+    const cjsInteropDeps = resolvedExternals.cjsInteropDeps;
 
     // Build logger — suppresses Vite header, rebrands [vite] → [electro]
     const logger = createBuildLogger();
@@ -116,6 +118,7 @@ export async function build(options: BuildOptions): Promise<void> {
             logger,
             bytecode: options.bytecode,
             format: nodeFormat,
+            cjsInteropDeps,
         });
     } catch (err) {
         stepFail("main", err instanceof Error ? err.message : String(err));
@@ -136,6 +139,7 @@ export async function build(options: BuildOptions): Promise<void> {
                 logger,
                 bytecode: options.bytecode,
                 format: nodeFormat,
+                cjsInteropDeps,
             });
         } catch (err) {
             stepFail("preload", err instanceof Error ? err.message : String(err));
@@ -186,6 +190,7 @@ interface MainBuildArgs {
     logger: import("vite").Logger;
     bytecode?: boolean;
     format: NodeOutputFormat;
+    cjsInteropDeps: string[];
 }
 
 async function buildMain(args: MainBuildArgs): Promise<void> {
@@ -213,6 +218,7 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
         customLogger: args.logger,
         logLevel: "info",
         format: args.format,
+        cjsInteropDeps: args.cjsInteropDeps,
         define: {
             __ELECTRO_VIEW_REGISTRY__: JSON.stringify(viewRegistry),
         },
@@ -231,6 +237,7 @@ interface PreloadBuildArgs {
     logger: import("vite").Logger;
     bytecode?: boolean;
     format: NodeOutputFormat;
+    cjsInteropDeps: string[];
 }
 
 async function buildPreload(args: PreloadBuildArgs): Promise<void> {
@@ -263,6 +270,7 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
         customLogger: args.logger,
         logLevel: "info",
         format: args.format,
+        cjsInteropDeps: args.cjsInteropDeps,
     });
 
     if (Object.keys(input).length > 1) {
@@ -278,6 +286,7 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
             customLogger: args.logger,
             logLevel: "info",
             format: args.format,
+            cjsInteropDeps: args.cjsInteropDeps,
         });
         (baseConfig.plugins as Plugin[]).push(isolateEntriesPlugin(subBuildConfig));
     }
