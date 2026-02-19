@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import type { ElectroConfig } from "@cordy/electro";
 import type { ScanResult } from "@cordy/electro-generator";
 import { generate, scan } from "@cordy/electro-generator";
@@ -34,6 +35,8 @@ import { createRendererConfig } from "./vite-renderer-config";
 
 const MAIN_RESTART_DEBOUNCE_MS = 80;
 const CONFIG_DEBOUNCE_MS = 300;
+const MAIN_ENTRY_WAIT_TIMEOUT_MS = 10_000;
+const MAIN_ENTRY_WAIT_INTERVAL_MS = 50;
 
 export interface DevServerOptions {
     configPath: string;
@@ -66,6 +69,8 @@ export class DevServer {
     private preloadWatch: { close(): void } | null = null;
     private outputDir = "";
     private nodeFormat: NodeOutputFormat = "es";
+    private mainInitialBuildPromise: Promise<void> | null = null;
+    private resolveMainInitialBuild: (() => void) | null = null;
     private readonly logLevel?: "info" | "warn" | "error" | "silent";
     private readonly clearScreen?: boolean;
     private readonly rendererOnly: boolean;
@@ -197,6 +202,7 @@ export class DevServer {
         // 7. Launch Electron
         const electronTimer = startTimer();
         try {
+            await this.waitForMainInitialBuild();
             await this.attachElectronProcess();
             step("electron", electronTimer());
         } catch (err) {
@@ -237,6 +243,8 @@ export class DevServer {
         this.mainWatch = null;
         this.preloadWatch?.close();
         this.preloadWatch = null;
+        this.resolveMainInitialBuild = null;
+        this.mainInitialBuildPromise = null;
 
         if (this.mainRestartFlushTimer) {
             clearTimeout(this.mainRestartFlushTimer);
@@ -380,6 +388,12 @@ export class DevServer {
         const runtimeEntry = this.config!.runtime.entry;
         const sourceDir = dirname(this.config!.runtime.__source);
         const entry = resolve(sourceDir, runtimeEntry);
+        this.mainInitialBuildPromise = new Promise<void>((resolve) => {
+            this.resolveMainInitialBuild = () => {
+                resolve();
+                this.resolveMainInitialBuild = null;
+            };
+        });
 
         const viewRegistry = (this.config!.views ?? []).map((v) => ({
             id: v.name,
@@ -420,6 +434,7 @@ export class DevServer {
                 if (firstBuild) {
                     firstBuild = false;
                     changedFile = null;
+                    self.resolveMainInitialBuild?.();
                     return;
                 }
 
@@ -444,8 +459,24 @@ export class DevServer {
 
     // ── Electron process management ─────────────────────────
 
+    /**
+     * Primary startup synchronization for dev mode:
+     * wait until the initial main watch build has completed.
+     */
+    private async waitForMainInitialBuild(): Promise<void> {
+        if (!this.mainInitialBuildPromise) return;
+
+        const timeout = sleep(MAIN_ENTRY_WAIT_TIMEOUT_MS).then(() => {
+            throw new Error(`Main initial build did not finish in ${MAIN_ENTRY_WAIT_TIMEOUT_MS}ms.`);
+        });
+
+        const promise = this.mainInitialBuildPromise;
+        this.mainInitialBuildPromise = null;
+        await Promise.race([promise, timeout]);
+    }
+
     private async attachElectronProcess(): Promise<void> {
-        const mainEntry = await resolveMainEntryPath(resolve(this.outputDir, "main"));
+        const mainEntry = await this.waitForMainEntry();
         const env: Record<string, string> = {
             ELECTRO_DEV: "true",
         };
@@ -484,6 +515,31 @@ export class DevServer {
             this.stop();
             process.exit(code === 0 ? 0 : 1);
         });
+    }
+
+    /**
+     * In watch mode, Vite can return the watcher before the first output file
+     * is written. Wait for the built main entry to appear before spawning Electron.
+     */
+    private async waitForMainEntry(): Promise<string> {
+        const mainOutDir = resolve(this.outputDir, "main");
+        const deadline = Date.now() + MAIN_ENTRY_WAIT_TIMEOUT_MS;
+        let lastError: unknown;
+
+        while (Date.now() < deadline) {
+            try {
+                return await resolveMainEntryPath(mainOutDir);
+            } catch (err) {
+                lastError = err;
+                await sleep(MAIN_ENTRY_WAIT_INTERVAL_MS);
+            }
+        }
+
+        const detail = lastError instanceof Error ? ` Last error: ${lastError.message}` : "";
+        throw new Error(
+            `Main entry was not generated in time (${MAIN_ENTRY_WAIT_TIMEOUT_MS}ms).` +
+                ` Checked in: ${mainOutDir}.${detail}`,
+        );
     }
 
     /**
