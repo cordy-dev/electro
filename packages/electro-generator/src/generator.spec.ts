@@ -114,10 +114,7 @@ describe("generate()", () => {
 
         // 1 preload + 1 bridge types
         expect(files).toHaveLength(2);
-        expect(files.map((f) => f.path)).toEqual([
-            "generated/preload/main.gen.ts",
-            "generated/views/main.bridge.d.ts",
-        ]);
+        expect(files.map((f) => f.path)).toEqual(["generated/preload/main.gen.ts", "generated/views/main.bridge.d.ts"]);
         expect(envTypes.path).toBe("electro-env.d.ts");
     });
 
@@ -356,7 +353,9 @@ describe("generate()", () => {
     });
 
     it("handles empty features list", () => {
-        const { files } = generate(defaultInput({ scanResult: { features: [], windows: [] }, views: [makeView("main", [])] }));
+        const { files } = generate(
+            defaultInput({ scanResult: { features: [], windows: [] }, views: [makeView("main", [])] }),
+        );
 
         const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
         expect(preload.content).toContain('electro", {})');
@@ -615,36 +614,52 @@ describe("generate()", () => {
     // ── WindowApiMap generation ────────────────────────────────────
 
     it("generates WindowApiMap for scanned windows", () => {
-        const { envTypes } = generate(defaultInput({
-            scanResult: {
-                ...makeScanResult(),
-                windows: [
-                    { id: "splash", varName: "splashWindow", filePath: "/project/src/windows/splash.ts", exported: true },
-                    { id: "main", varName: "mainWindow", filePath: "/project/src/windows/main.ts", exported: true },
-                ],
-            },
-        }));
+        const { envTypes } = generate(
+            defaultInput({
+                scanResult: {
+                    ...makeScanResult(),
+                    windows: [
+                        {
+                            id: "splash",
+                            varName: "splashWindow",
+                            filePath: "/project/src/windows/splash.ts",
+                            exported: true,
+                        },
+                        { id: "main", varName: "mainWindow", filePath: "/project/src/windows/main.ts", exported: true },
+                    ],
+                },
+            }),
+        );
         expect(envTypes.content).toContain("interface WindowApiMap");
         expect(envTypes.content).toContain('"splash": _WinApi<typeof import("./windows/splash").splashWindow>');
         expect(envTypes.content).toContain('"main": _WinApi<typeof import("./windows/main").mainWindow>');
     });
 
     it("uses unknown fallback for non-exported windows", () => {
-        const { envTypes } = generate(defaultInput({
-            scanResult: {
-                ...makeScanResult(),
-                windows: [
-                    { id: "hidden", varName: "hiddenWin", filePath: "/project/src/windows/hidden.ts", exported: false },
-                ],
-            },
-        }));
+        const { envTypes } = generate(
+            defaultInput({
+                scanResult: {
+                    ...makeScanResult(),
+                    windows: [
+                        {
+                            id: "hidden",
+                            varName: "hiddenWin",
+                            filePath: "/project/src/windows/hidden.ts",
+                            exported: false,
+                        },
+                    ],
+                },
+            }),
+        );
         expect(envTypes.content).toContain('"hidden": unknown');
     });
 
     it("omits WindowApiMap when no windows scanned", () => {
-        const { envTypes } = generate(defaultInput({
-            scanResult: { ...makeScanResult(), windows: [] },
-        }));
+        const { envTypes } = generate(
+            defaultInput({
+                scanResult: { ...makeScanResult(), windows: [] },
+            }),
+        );
         expect(envTypes.content).not.toContain("interface WindowApiMap");
     });
 

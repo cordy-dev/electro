@@ -94,7 +94,11 @@ describe("PolicyEngine", () => {
 
     describe("getViewNames", () => {
         it("returns all registered view names", () => {
-            const engine = new PolicyEngine([view("main", ["auth"]), view("splash", []), view("settings", ["settings"])]);
+            const engine = new PolicyEngine([
+                view("main", ["auth"]),
+                view("splash", []),
+                view("settings", ["settings"]),
+            ]);
             expect(engine.getViewNames()).toEqual(["main", "splash", "settings"]);
         });
 

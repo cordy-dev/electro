@@ -8,9 +8,7 @@ import type { CreatedWindow, WindowConfig } from "./types";
  * @returns A new `Window` instance ready for registration.
  * @throws If `config.id` is empty.
  */
-export function createWindow<TApi = void>(
-    config: WindowConfig<TApi>,
-): CreatedWindow<TApi> {
+export function createWindow<TApi = void>(config: WindowConfig<TApi>): CreatedWindow<TApi> {
     if (!config.id) {
         throw new Error("Window must have an id");
     }
