@@ -1,6 +1,6 @@
 import { dirname, resolve } from "node:path";
 import type { ViewDefinition } from "@cordy/electro";
-import type { InlineConfig, Logger, UserConfig } from "vite";
+import type { InlineConfig, Logger, Plugin, UserConfig } from "vite";
 import { mergeConfig } from "vite";
 
 export interface RendererConfigOptions {
@@ -76,14 +76,40 @@ export function createRendererConfig(opts: RendererConfigOptions): InlineConfig 
         clearScreen: opts.clearScreen,
     };
 
-    // Merge all view vite configs
+    // Merge all view vite configs, deduplicating plugins by name
     if (opts.userViteConfigs?.length) {
         let merged = config;
         for (const userConfig of opts.userViteConfigs) {
             merged = mergeConfig(merged, userConfig) as InlineConfig;
         }
+        merged.plugins = deduplicatePlugins(merged.plugins as Plugin[]);
         return merged;
     }
 
     return config;
+}
+
+/**
+ * Deduplicate plugins by name — keeps the first occurrence of each named plugin.
+ * This allows multiple views to declare the same plugins (e.g. react()) without
+ * causing duplicate injection errors when configs are merged.
+ */
+function deduplicatePlugins(plugins: Plugin[]): Plugin[] {
+    if (!plugins) return [];
+
+    const seen = new Set<string>();
+    const result: Plugin[] = [];
+
+    for (const plugin of plugins.flat(Infinity) as Plugin[]) {
+        const name = plugin?.name;
+        if (!name) {
+            result.push(plugin);
+            continue;
+        }
+        if (seen.has(name)) continue;
+        seen.add(name);
+        result.push(plugin);
+    }
+
+    return result;
 }
