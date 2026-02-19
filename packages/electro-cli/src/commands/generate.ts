@@ -1,7 +1,13 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { dirname, relative, resolve } from "node:path";
 import type { ElectroConfig } from "@cordy/electro";
 import { generate as generateFiles, scan } from "@cordy/electro-generator";
+import {
+    findBridgeTypesForView,
+    generatedBridgeTypesPaths,
+    isGeneratedBridgeTypesPath,
+    resolveViewBridgePath,
+} from "../dev/bridge-types";
 
 interface GenerateOptions {
     config: string;
@@ -36,10 +42,30 @@ export async function generate(options: GenerateOptions): Promise<void> {
 
     // 4. Write to disk
     for (const file of files) {
+        if (isGeneratedBridgeTypesPath(file.path)) continue;
         const fullPath = resolve(outputDir, file.path);
         await mkdir(dirname(fullPath), { recursive: true });
         await writeFile(fullPath, file.content);
         console.log(`  .electro/${file.path}`);
+    }
+
+    for (const view of views) {
+        const bridge = findBridgeTypesForView(files, view.name);
+        const bridgePath = resolveViewBridgePath(view);
+        if (bridge && bridgePath) {
+            await mkdir(dirname(bridgePath), { recursive: true });
+            await writeFileIfChanged(bridgePath, bridge.content);
+            console.log(`  ${relative(process.cwd(), bridgePath)}`);
+        }
+
+        for (const relPath of generatedBridgeTypesPaths(view.name)) {
+            const legacyPath = resolve(outputDir, relPath);
+            try {
+                await unlink(legacyPath);
+            } catch {
+                // Ignore when file does not exist.
+            }
+        }
     }
 
     const envTypesPath = resolve(srcDir, envTypes.path);
@@ -48,4 +74,15 @@ export async function generate(options: GenerateOptions): Promise<void> {
     console.log(`  src/${envTypes.path}`);
 
     console.log("Done.");
+}
+
+async function writeFileIfChanged(filePath: string, content: string): Promise<void> {
+    try {
+        const prev = await readFile(filePath, "utf-8");
+        if (prev === content) return;
+    } catch {
+        // File does not exist yet.
+    }
+
+    await writeFile(filePath, content);
 }

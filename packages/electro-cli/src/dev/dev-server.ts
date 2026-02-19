@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { ElectroConfig } from "@cordy/electro";
@@ -32,6 +32,12 @@ import type { NodeOutputFormat } from "./node-format";
 import { resolveMainEntryPath, resolveNodeOutputFormat } from "./node-format";
 import { createNodeConfig } from "./vite-node-config";
 import { createRendererConfig } from "./vite-renderer-config";
+import {
+    findBridgeTypesForView,
+    generatedBridgeTypesPaths,
+    isGeneratedBridgeTypesPath,
+    resolveViewBridgePath,
+} from "./bridge-types";
 
 const MAIN_RESTART_DEBOUNCE_MS = 80;
 const CONFIG_DEBOUNCE_MS = 300;
@@ -281,14 +287,33 @@ export class DevServer {
         await mkdir(outputDir, { recursive: true });
 
         for (const file of files) {
+            if (isGeneratedBridgeTypesPath(file.path)) continue;
             const filePath = resolve(outputDir, file.path);
             await mkdir(dirname(filePath), { recursive: true });
             await writeFile(filePath, file.content);
         }
 
+        for (const view of this.config!.views ?? []) {
+            const bridge = findBridgeTypesForView(files, view.name);
+            const bridgePath = resolveViewBridgePath(view);
+            if (bridge && bridgePath) {
+                await mkdir(dirname(bridgePath), { recursive: true });
+                await writeFileIfChanged(bridgePath, bridge.content);
+            }
+
+            for (const relPath of generatedBridgeTypesPaths(view.name)) {
+                const legacyPath = resolve(outputDir, relPath);
+                try {
+                    await unlink(legacyPath);
+                } catch {
+                    // Ignore when file does not exist.
+                }
+            }
+        }
+
         const envTypesPath = resolve(srcDir, envTypes.path);
         await mkdir(dirname(envTypesPath), { recursive: true });
-        await writeFile(envTypesPath, envTypes.content);
+        await writeFileIfChanged(envTypesPath, envTypes.content);
     }
 
     private async startRenderer(): Promise<void> {
@@ -649,4 +674,15 @@ export class DevServer {
             }, CONFIG_DEBOUNCE_MS);
         });
     }
+}
+
+async function writeFileIfChanged(filePath: string, content: string): Promise<void> {
+    try {
+        const prev = await readFile(filePath, "utf-8");
+        if (prev === content) return;
+    } catch {
+        // File does not exist yet.
+    }
+
+    await writeFile(filePath, content);
 }

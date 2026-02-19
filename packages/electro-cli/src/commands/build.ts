@@ -12,6 +12,12 @@ import type { NodeOutputFormat } from "../dev/node-format";
 import { resolveNodeOutputFormat } from "../dev/node-format";
 import { createNodeConfig } from "../dev/vite-node-config";
 import { createRendererConfig } from "../dev/vite-renderer-config";
+import {
+    findBridgeTypesForView,
+    generatedBridgeTypesPaths,
+    isGeneratedBridgeTypesPath,
+    resolveViewBridgePath,
+} from "../dev/bridge-types";
 import { assetPlugin } from "../plugins/asset";
 import { bytecodePlugin } from "../plugins/bytecode";
 import { isolateEntriesPlugin } from "../plugins/isolate-entries";
@@ -83,14 +89,33 @@ export async function build(options: BuildOptions): Promise<void> {
 
         await mkdir(codegenDir, { recursive: true });
         for (const file of files) {
+            if (isGeneratedBridgeTypesPath(file.path)) continue;
             const filePath = resolve(codegenDir, file.path);
             await mkdir(dirname(filePath), { recursive: true });
             await writeFile(filePath, file.content);
         }
 
+        for (const view of views) {
+            const bridge = findBridgeTypesForView(files, view.name);
+            const bridgePath = resolveViewBridgePath(view);
+            if (bridge && bridgePath) {
+                await mkdir(dirname(bridgePath), { recursive: true });
+                await writeFileIfChanged(bridgePath, bridge.content);
+            }
+
+            for (const relPath of generatedBridgeTypesPaths(view.name)) {
+                const legacyPath = resolve(codegenDir, relPath);
+                try {
+                    await unlink(legacyPath);
+                } catch {
+                    // Ignore when file does not exist.
+                }
+            }
+        }
+
         const envTypesPath = resolve(srcDir, envTypes.path);
         await mkdir(dirname(envTypesPath), { recursive: true });
-        await writeFile(envTypesPath, envTypes.content);
+        await writeFileIfChanged(envTypesPath, envTypes.content);
 
         step("codegen", codegenTimer());
     } catch (err) {
@@ -177,6 +202,17 @@ export async function build(options: BuildOptions): Promise<void> {
 
     // 9. Footer with total time
     footer(`Built in ${totalTimer()}`, outDir);
+}
+
+async function writeFileIfChanged(filePath: string, content: string): Promise<void> {
+    try {
+        const prev = await readFile(filePath, "utf-8");
+        if (prev === content) return;
+    } catch {
+        // File does not exist yet.
+    }
+
+    await writeFile(filePath, content);
 }
 
 // ── Internal build helpers ──────────────────────────────────────────
