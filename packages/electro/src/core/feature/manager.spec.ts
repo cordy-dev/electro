@@ -442,9 +442,7 @@ describe("FeatureManager", () => {
             // ERROR -> DESTROYING -> DESTROYED
             expect(mgr.get("feat")!.status).toBe(FeatureStatus.DESTROYED);
             // Verify the deactivate error was logged
-            expect(logger.error).toHaveBeenCalledWith("feat", "deactivate failed", {
-                error: "deactivate failed",
-            });
+            expect(logger.error).toHaveBeenCalledWith("feat", "deactivate failed: deactivate failed");
         });
 
         it("destroy error sets feature to ERROR", async () => {
@@ -475,9 +473,7 @@ describe("FeatureManager", () => {
                 }),
             );
             await mgr.bootstrap();
-            expect(logger.error).toHaveBeenCalledWith("feat", "initialize failed", {
-                error: "init-string-error",
-            });
+            expect(logger.error).toHaveBeenCalledWith("feat", "initialize failed: init-string-error");
         });
 
         it("logs String(err) when non-Error is thrown from activate", async () => {
@@ -492,9 +488,7 @@ describe("FeatureManager", () => {
                 }),
             );
             await mgr.bootstrap();
-            expect(logger.error).toHaveBeenCalledWith("feat", "activate failed", {
-                error: "string-error",
-            });
+            expect(logger.error).toHaveBeenCalledWith("feat", "activate failed: string-error");
         });
 
         it("logs String(err) when non-Error is thrown from deactivate", async () => {
@@ -510,9 +504,7 @@ describe("FeatureManager", () => {
             );
             await mgr.bootstrap();
             await mgr.shutdown();
-            expect(logger.error).toHaveBeenCalledWith("feat", "deactivate failed", {
-                error: "deactivate-string-error",
-            });
+            expect(logger.error).toHaveBeenCalledWith("feat", "deactivate failed: deactivate-string-error");
         });
 
         it("logs String(err) when non-Error is thrown from destroy", async () => {
@@ -528,9 +520,7 @@ describe("FeatureManager", () => {
             );
             await mgr.bootstrap();
             await mgr.shutdown();
-            expect(logger.error).toHaveBeenCalledWith("feat", "destroy failed", {
-                error: "destroy-string-error",
-            });
+            expect(logger.error).toHaveBeenCalledWith("feat", "destroy failed: destroy-string-error");
         });
 
         it("ERROR features can still be destroyed during shutdown", async () => {

@@ -70,11 +70,11 @@ describe("Feature", () => {
 
         it("context has stub getService/getTask/getFeature/events that throw", () => {
             const f = createFeatureInstance();
-            expect(() => f.context.getService("x")).toThrow("Services not yet initialized");
-            expect(() => f.context.getTask("x")).toThrow("Tasks not yet initialized");
-            expect(() => f.context.getFeature("x")).toThrow("Features not yet initialized");
-            expect(() => f.context.events.publish("x")).toThrow("Events not yet initialized");
-            expect(() => f.context.events.on("x", () => {})).toThrow("Events not yet initialized");
+            expect(() => f.context.getService("x")).toThrow("not available");
+            expect(() => f.context.getTask("x")).toThrow("not available");
+            expect(() => f.context.getFeature("x")).toThrow("not available");
+            expect(() => f.context.events.publish("x")).toThrow("not available");
+            expect(() => f.context.events.on("x", () => {})).toThrow("not available");
         });
     });
 

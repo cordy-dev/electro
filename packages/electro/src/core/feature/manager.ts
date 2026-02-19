@@ -142,12 +142,11 @@ export class FeatureManager {
             feature.transition(FeatureStatus.READY);
         } catch (err) {
             feature.transition(FeatureStatus.ERROR);
-            this.logger.error(id, `initialize failed`, {
-                error: err instanceof Error ? err.message : String(err),
-            });
+            const message = err instanceof Error ? err.message : String(err);
+            this.logger.error(id, `initialize failed: ${message}`);
 
             if (feature.config.critical) {
-                throw new Error(`Critical feature "${id}" failed to initialize`);
+                throw new Error(`Critical feature "${id}" failed to initialize: ${message}`, { cause: err });
             }
         }
     }
@@ -182,12 +181,11 @@ export class FeatureManager {
             feature.transition(FeatureStatus.ACTIVATED);
         } catch (err) {
             feature.transition(FeatureStatus.ERROR);
-            this.logger.error(id, `activate failed`, {
-                error: err instanceof Error ? err.message : String(err),
-            });
+            const message = err instanceof Error ? err.message : String(err);
+            this.logger.error(id, `activate failed: ${message}`);
 
             if (feature.config.critical) {
-                throw new Error(`Critical feature "${id}" failed to activate`);
+                throw new Error(`Critical feature "${id}" failed to activate: ${message}`, { cause: err });
             }
         }
     }
@@ -206,9 +204,8 @@ export class FeatureManager {
             feature.transition(FeatureStatus.DEACTIVATED);
         } catch (err) {
             feature.transition(FeatureStatus.ERROR);
-            this.logger.error(id, `deactivate failed`, {
-                error: err instanceof Error ? err.message : String(err),
-            });
+            const message = err instanceof Error ? err.message : String(err);
+            this.logger.error(id, `deactivate failed: ${message}`);
         }
     }
 
@@ -222,9 +219,8 @@ export class FeatureManager {
             feature.transition(FeatureStatus.DESTROYED);
         } catch (err) {
             feature.transition(FeatureStatus.ERROR);
-            this.logger.error(id, `destroy failed`, {
-                error: err instanceof Error ? err.message : String(err),
-            });
+            const message = err instanceof Error ? err.message : String(err);
+            this.logger.error(id, `destroy failed: ${message}`);
         }
     }
 

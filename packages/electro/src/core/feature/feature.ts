@@ -46,32 +46,35 @@ export class Feature<FId extends FeatureId> {
             initial: FeatureStatus.NONE,
             name: `feature "${config.id}"`,
         });
+        const fid = config.id;
         this.context = {
             getService: () => {
-                throw new Error("Services not yet initialized");
+                throw new Error(`[${fid}] ctx.getService() is not available — feature has not been initialized yet`);
             },
             getTask: () => {
-                throw new Error("Tasks not yet initialized");
+                throw new Error(`[${fid}] ctx.getTask() is not available — feature has not been initialized yet`);
             },
             getFeature: () => {
-                throw new Error("Features not yet initialized");
+                throw new Error(`[${fid}] ctx.getFeature() is not available — feature has not been initialized yet`);
             },
             events: {
                 publish: () => {
-                    throw new Error("Events not yet initialized");
+                    throw new Error(
+                        `[${fid}] ctx.events.publish() is not available — feature has not been initialized yet`,
+                    );
                 },
                 on: () => {
-                    throw new Error("Events not yet initialized");
+                    throw new Error(`[${fid}] ctx.events.on() is not available — feature has not been initialized yet`);
                 },
             },
             getWindow: () => {
-                throw new Error("Window manager not available");
+                throw new Error(`[${fid}] ctx.getWindow() is not available — feature has not been initialized yet`);
             },
             createView: () => {
-                throw new Error("View manager not available");
+                throw new Error(`[${fid}] ctx.createView() is not available — feature has not been initialized yet`);
             },
             getView: () => {
-                throw new Error("View manager not available");
+                throw new Error(`[${fid}] ctx.getView() is not available — feature has not been initialized yet`);
             },
             logger: this.logger,
             signal: this.controller.signal,
@@ -153,19 +156,6 @@ export class Feature<FId extends FeatureId> {
         const accessor = new ServiceAccessor(this.serviceManager, deps);
         this.context.getService = ((name: string) => accessor.get(name)) as FeatureContext<any>["getService"];
 
-        this.serviceManager.startup();
-
-        // build tasks context
-        this.taskManager = new TaskManager(this.context);
-        for (const task of this.config.tasks ?? []) {
-            this.taskManager.register(task);
-        }
-
-        this.context.getTask = ((name: string) => {
-            const taskInstance = this.taskManager!.getTaskInstance(name);
-            return new TaskHandle(taskInstance, this.context);
-        }) as FeatureContext<any>["getTask"];
-
         // build getFeature — only declared dependencies are accessible
         const declaredDeps = new Set(this.config.dependencies ?? []);
         this.context.getFeature = ((name: string) => {
@@ -223,5 +213,19 @@ export class Feature<FId extends FeatureId> {
                 return inst.view();
             };
         }
+
+        // start services — all context methods are available at this point
+        this.serviceManager.startup();
+
+        // build tasks context
+        this.taskManager = new TaskManager(this.context);
+        for (const task of this.config.tasks ?? []) {
+            this.taskManager.register(task);
+        }
+
+        this.context.getTask = ((name: string) => {
+            const taskInstance = this.taskManager!.getTaskInstance(name);
+            return new TaskHandle(taskInstance, this.context);
+        }) as FeatureContext<any>["getTask"];
     }
 }
