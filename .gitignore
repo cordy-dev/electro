@@ -41,4 +41,4 @@ coverage/
 
 # AI Agents
 .claude/
-./electron-vite
+electron-vite
