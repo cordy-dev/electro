@@ -353,15 +353,15 @@ describe("Feature", () => {
 
         it("hooks are optional -- no error when omitted", async () => {
             const f = createFeatureInstance();
-            await expect(f.initialize([], dummyMgr)).resolves.not.toThrow();
-            await expect(f.activate()).resolves.not.toThrow();
-            await expect(f.deactivate()).resolves.not.toThrow();
-            await expect(f.destroy()).resolves.not.toThrow();
+            await f.initialize([], dummyMgr);
+            await f.activate();
+            await f.deactivate();
+            await f.destroy();
         });
 
         it("deactivate() is safe before initialize (no serviceManager/taskManager)", async () => {
             const f = createFeatureInstance();
-            await expect(f.deactivate()).resolves.not.toThrow();
+            await f.deactivate();
         });
     });
 
