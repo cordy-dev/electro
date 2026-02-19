@@ -339,7 +339,7 @@ export interface GeneratorOutput {
  * Generate all output files from scan results and view definitions.
  */
 export function generate(input: GeneratorInput): GeneratorOutput {
-    const { scanResult, views, outputDir, srcDir } = input;
+    const { scanResult, views, srcDir } = input;
     const policy = new PolicyEngine(views);
     const files: GeneratedFile[] = [];
 
