@@ -1,6 +1,6 @@
+import type { TaskHandle } from "./task/handle";
 import type { ElectroView } from "./view/types";
 import type { CreatedWindow } from "./window/types";
-import type { TaskHandle } from "./task/handle";
 
 /**
  * Declaration-merging registry.

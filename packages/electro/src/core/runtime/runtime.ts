@@ -1,3 +1,4 @@
+import { EventBridge } from "../event-bus/bridge";
 import { EventBus } from "../event-bus/event-bus";
 import { FeatureStatus } from "../feature/enums";
 import { FeatureManager } from "../feature/manager";
@@ -30,6 +31,7 @@ export class Runtime {
     private readonly eventBus: EventBus;
     private readonly windowManager: WindowManager;
     private readonly viewManager: ViewManager;
+    private readonly eventBridge: EventBridge | null = null;
 
     constructor(config?: RuntimeConfig) {
         this.state = new StateMachine<RuntimeState>({
@@ -66,6 +68,11 @@ export class Runtime {
             this.viewManager.register(new View(entry));
         }
 
+        // Wire event bridge for forwarding events to renderer views
+        if (viewRegistry.some((v) => v.features && v.features.length > 0)) {
+            this.eventBridge = new EventBridge(this.eventBus, this.viewManager, viewRegistry);
+        }
+
         // Pass managers to feature manager
         this.featureManager.setWindowManager(this.windowManager);
         this.featureManager.setViewManager(this.viewManager);
@@ -85,9 +92,11 @@ export class Runtime {
     async start(): Promise<void> {
         this.state.transition(RuntimeState.STARTING);
         try {
+            this.eventBridge?.start();
             await this.featureManager.bootstrap();
             this.state.transition(RuntimeState.RUNNING);
         } catch (err) {
+            this.eventBridge?.stop();
             this.state.transition(RuntimeState.FAILED);
             throw err;
         }
@@ -96,6 +105,7 @@ export class Runtime {
     async shutdown(): Promise<void> {
         this.state.assertState(RuntimeState.RUNNING);
         this.state.transition(RuntimeState.STOPPING);
+        this.eventBridge?.stop();
         await this.featureManager.shutdown();
         this.viewManager.destroyAll();
         this.windowManager.destroyAll();

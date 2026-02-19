@@ -70,6 +70,18 @@ function generatePreload(
         featureEntries.push(`    ${q(feature.id)}: {\n${serviceEntries.join("\n")}\n    },`);
     }
 
+    // Add events listener when view has allowed features
+    if (allowedFeatures.length > 0) {
+        featureEntries.push(`    events: {
+        on: (channel: string, handler: (...args: unknown[]) => void) => {
+            const ipcChannel = \`electro:event:\${channel}\`;
+            const listener = (_event: unknown, payload: unknown) => handler(payload);
+            ipcRenderer.on(ipcChannel, listener);
+            return () => { ipcRenderer.removeListener(ipcChannel, listener); };
+        },
+    },`);
+    }
+
     const bridgeObject = featureEntries.length > 0 ? `{\n${featureEntries.join("\n")}\n}` : "{}";
 
     let content = `${HEADER}
@@ -120,6 +132,22 @@ function generateBridgeTypes(viewName: string, features: ScannedFeature[], polic
         }
 
         featureTypes.push(`        ${q(feature.id)}: {\n${serviceTypes.join("\n")}\n        };`);
+    }
+
+    // Collect event keys from allowed features
+    const eventKeys: string[] = [];
+    for (const feature of allowedFeatures) {
+        for (const evt of feature.events ?? []) {
+            eventKeys.push(`"${feature.id}:${evt.id}"`);
+        }
+    }
+
+    // Add events type if view has allowed features
+    if (allowedFeatures.length > 0) {
+        const channelType = eventKeys.length > 0 ? eventKeys.join(" | ") : "string";
+        featureTypes.push(
+            `        events: {\n            on(channel: ${channelType} | (string & {}), handler: (payload: unknown) => void): () => void;\n        };`,
+        );
     }
 
     const interfaceBody = featureTypes.length > 0 ? `{\n${featureTypes.join("\n")}\n    }` : "{}";

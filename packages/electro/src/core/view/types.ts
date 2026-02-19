@@ -6,6 +6,7 @@ export type ViewId = string;
 export interface ViewRegistryEntry {
     id: ViewId;
     hasRenderer: boolean;
+    features?: readonly string[];
     webPreferences?: Record<string, unknown>;
 }
 

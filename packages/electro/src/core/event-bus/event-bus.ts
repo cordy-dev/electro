@@ -1,14 +1,27 @@
-import type { EventHandler, EventSubscription } from "./types";
+import type { EventHandler, EventInterceptor, EventSubscription } from "./types";
 
 export class EventBus {
     private readonly subscriptions: Map<string, Set<EventSubscription>> = new Map();
+    private readonly interceptors: Set<EventInterceptor> = new Set();
 
     publish(channel: string, payload?: unknown): void {
         const subs = this.subscriptions.get(channel);
-        if (!subs) return;
-        for (const sub of subs) {
-            sub.handler(payload);
+        if (subs) {
+            for (const sub of subs) {
+                sub.handler(payload);
+            }
         }
+        for (const interceptor of this.interceptors) {
+            interceptor(channel, payload);
+        }
+    }
+
+    /** Register an interceptor that receives every published event. Returns an unsubscribe function. */
+    addInterceptor(fn: EventInterceptor): () => void {
+        this.interceptors.add(fn);
+        return () => {
+            this.interceptors.delete(fn);
+        };
     }
 
     subscribe(channel: string, handler: EventHandler, ownerId: string): () => void {

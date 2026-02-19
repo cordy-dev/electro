@@ -1,5 +1,7 @@
 export type EventHandler = (payload: unknown) => void;
 
+export type EventInterceptor = (channel: string, payload: unknown) => void;
+
 export type EventSubscription = {
     channel: string;
     handler: EventHandler;

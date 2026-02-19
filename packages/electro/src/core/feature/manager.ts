@@ -1,7 +1,7 @@
-import type { ViewManager } from "../view/manager";
-import type { WindowManager } from "../window/manager";
 import type { EventBus } from "../event-bus/event-bus";
 import type { LoggerContext } from "../types";
+import type { ViewManager } from "../view/manager";
+import type { WindowManager } from "../window/manager";
 import { FeatureStatus } from "./enums";
 import { Feature } from "./feature";
 import type { FeatureConfig, FeatureId } from "./types";

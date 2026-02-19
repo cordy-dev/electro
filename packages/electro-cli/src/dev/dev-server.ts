@@ -378,6 +378,7 @@ export class DevServer {
         const viewRegistry = (this.config!.views ?? []).map((v) => ({
             id: v.name,
             hasRenderer: !!v.entry,
+            features: v.features ?? [],
             webPreferences: v.webPreferences ?? {},
         }));
 

@@ -5,6 +5,7 @@
  *   1. publish / subscribe
  *   2. Unsubscribe
  *   3. removeByOwner
+ *   4. Interceptors
  */
 import { describe, expect, it, vi } from "vitest";
 import { EventBus } from "./event-bus";
@@ -94,6 +95,56 @@ describe("EventBus", () => {
         it("no-op when owner has no subscriptions", () => {
             const bus = new EventBus();
             expect(() => bus.removeByOwner("nonexistent")).not.toThrow();
+        });
+    });
+
+    describe("Interceptors", () => {
+        it("interceptor receives every published event", () => {
+            const bus = new EventBus();
+            const interceptor = vi.fn();
+            bus.addInterceptor(interceptor);
+            bus.publish("feat:event", { value: 1 });
+            bus.publish("other:ping");
+            expect(interceptor).toHaveBeenCalledTimes(2);
+            expect(interceptor).toHaveBeenCalledWith("feat:event", { value: 1 });
+            expect(interceptor).toHaveBeenCalledWith("other:ping", undefined);
+        });
+
+        it("interceptor fires even when no subscribers exist", () => {
+            const bus = new EventBus();
+            const interceptor = vi.fn();
+            bus.addInterceptor(interceptor);
+            bus.publish("no:subscribers", "data");
+            expect(interceptor).toHaveBeenCalledWith("no:subscribers", "data");
+        });
+
+        it("removing interceptor stops it from receiving events", () => {
+            const bus = new EventBus();
+            const interceptor = vi.fn();
+            const remove = bus.addInterceptor(interceptor);
+            remove();
+            bus.publish("feat:event", "data");
+            expect(interceptor).not.toHaveBeenCalled();
+        });
+
+        it("multiple interceptors all receive events", () => {
+            const bus = new EventBus();
+            const a = vi.fn();
+            const b = vi.fn();
+            bus.addInterceptor(a);
+            bus.addInterceptor(b);
+            bus.publish("ch", "data");
+            expect(a).toHaveBeenCalledWith("ch", "data");
+            expect(b).toHaveBeenCalledWith("ch", "data");
+        });
+
+        it("interceptors fire after subscribers", () => {
+            const bus = new EventBus();
+            const order: string[] = [];
+            bus.subscribe("ch", () => order.push("subscriber"), "owner");
+            bus.addInterceptor(() => order.push("interceptor"));
+            bus.publish("ch", "data");
+            expect(order).toEqual(["subscriber", "interceptor"]);
         });
     });
 });

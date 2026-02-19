@@ -190,6 +190,7 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
     const viewRegistry = (args.config.views ?? []).map((v) => ({
         id: v.name,
         hasRenderer: !!v.entry,
+        features: v.features ?? [],
         webPreferences: v.webPreferences ?? {},
     }));
 

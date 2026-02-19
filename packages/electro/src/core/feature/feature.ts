@@ -1,5 +1,3 @@
-import type { ViewManager } from "../view/manager";
-import type { WindowManager } from "../window/manager";
 import { EventAccessor } from "../event-bus/accessor";
 import type { EventBus } from "../event-bus/event-bus";
 import { ServiceAccessor } from "../service/accessor";
@@ -8,6 +6,8 @@ import { StateMachine } from "../state-machine/state-machine";
 import { TaskHandle } from "../task/handle";
 import { TaskManager } from "../task/manager";
 import type { LoggerContext } from "../types";
+import type { ViewManager } from "../view/manager";
+import type { WindowManager } from "../window/manager";
 import { FeatureStatus } from "./enums";
 import { FeatureHandle } from "./handle";
 import type { FeatureManager } from "./manager";

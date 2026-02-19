@@ -12,8 +12,16 @@ export type {
 } from "./config/types";
 // ── Events ──────────────────────────────────────────────────────────
 export { EventAccessor } from "./core/event-bus/accessor";
+export { EventBridge } from "./core/event-bus/bridge";
 export { createEvent } from "./core/event-bus/helpers";
-export type { CreatedEvent, EventHandler, EventId, EventInstance, EventSubscription } from "./core/event-bus/types";
+export type {
+    CreatedEvent,
+    EventHandler,
+    EventId,
+    EventInstance,
+    EventInterceptor,
+    EventSubscription,
+} from "./core/event-bus/types";
 export { FeatureStatus } from "./core/feature/enums";
 export type { FeatureHandle } from "./core/feature/handle";
 // ── Feature ─────────────────────────────────────────────────────────
@@ -53,11 +61,11 @@ export type {
     ViewMap,
     WindowApiMap,
 } from "./core/types";
+// ── View (runtime) ──────────────────────────────────────────────────
+export type { ElectroView, ViewId, ViewInstance, ViewRegistryEntry } from "./core/view/types";
 // ── Window (runtime) ────────────────────────────────────────────────
 export { createWindow } from "./core/window/helpers";
 export type { CreatedWindow, WindowConfig, WindowId, WindowInstance } from "./core/window/types";
-// ── View (runtime) ──────────────────────────────────────────────────
-export type { ElectroView, ViewId, ViewInstance, ViewRegistryEntry } from "./core/view/types";
 // ── Policy ──────────────────────────────────────────────────────────
 export { PolicyEngine } from "./policy/engine";
 export type { PolicyResult } from "./policy/types";

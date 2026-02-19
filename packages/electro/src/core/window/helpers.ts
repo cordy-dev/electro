@@ -1,5 +1,5 @@
-import { Window } from "./window";
 import type { CreatedWindow, WindowConfig } from "./types";
+import { Window } from "./window";
 
 /**
  * Creates a {@link Window} instance from a configuration object.
