@@ -40,65 +40,6 @@ function resolveSourcemap(mode?: string): boolean | "inline" | "hidden" {
     return true;
 }
 
-/**
- * Vite plugin: rewrite static ESM `import { X } from "electron"` into CJS require().
- *
- * Electron's npm package is CJS. Node's ESM-CJS interop cannot detect all
- * named exports, so `import { Menu } from "electron"` fails at runtime.
- * This plugin post-processes the rendered chunk and replaces such imports
- * with `createRequire`-based require() calls.
- */
-function electronCjsCompat(): Plugin {
-    return {
-        name: "electro:electron-cjs-compat",
-        renderChunk(code) {
-            const re = /^import\s+(.+?)\s+from\s+"(electron(?:\/\w+)?)"\s*;\s*$/gm;
-            if (!re.test(code)) return null;
-            re.lastIndex = 0;
-
-            let result = code;
-            let match: RegExpExecArray | null;
-
-            while ((match = re.exec(code)) !== null) {
-                const [full, clause, specifier] = match;
-                const named = clause.match(/\{([^}]+)\}/)?.[1];
-                const def = clause.match(/^(\w+)/);
-                const hasDefault = def && !clause.startsWith("{");
-
-                const tag = specifier.replace(/\//g, "_");
-                const lines: string[] = [
-                    `import { createRequire as __cr_${tag} } from "node:module";`,
-                    `var __${tag} = __cr_${tag}(import.meta.url)("${specifier}");`,
-                ];
-
-                if (hasDefault && !named) {
-                    lines.push(`var ${def[1]} = __${tag};`);
-                }
-                if (hasDefault && named) {
-                    lines.push(`var ${def[1].replace(/,\s*$/, "").trim()} = __${tag};`);
-                }
-                if (named) {
-                    for (const n of named
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean)) {
-                        const alias = n.match(/^(\w+)\s+as\s+(\w+)$/);
-                        if (alias) {
-                            lines.push(`var ${alias[2]} = __${tag}.${alias[1]};`);
-                        } else {
-                            lines.push(`var ${n} = __${tag}.${n};`);
-                        }
-                    }
-                }
-
-                result = result.replace(full, lines.join("\n"));
-            }
-
-            return result;
-        },
-    };
-}
-
 export function createNodeConfig(opts: NodeConfigOptions): InlineConfig {
     const resolveConditions = opts.scope === "preload" ? ["node", "import", "default"] : ["node", "import"];
 
@@ -107,7 +48,7 @@ export function createNodeConfig(opts: NodeConfigOptions): InlineConfig {
     const config: InlineConfig = {
         configFile: false,
         root: opts.root,
-        plugins: [electronCjsCompat(), ...(opts.plugins ?? [])],
+        plugins: opts.plugins ?? [],
         customLogger: opts.customLogger,
         envPrefix,
 
