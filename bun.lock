@@ -30,7 +30,7 @@
     },
     "packages/electro": {
       "name": "@cordy/electro",
-      "version": "1.0.9",
+      "version": "1.1.0",
       "dependencies": {
         "croner": "^10.0.1",
       },
@@ -49,12 +49,12 @@
     },
     "packages/electro-cli": {
       "name": "@cordy/electro-cli",
-      "version": "1.0.9",
+      "version": "1.1.0",
       "bin": {
         "electro": "./dist/index.mjs",
       },
       "dependencies": {
-        "@cordy/electro-generator": "1.0.8",
+        "@cordy/electro-generator": "1.1.0",
       },
       "devDependencies": {
         "@cordy/electro": "workspace:*",
@@ -66,14 +66,14 @@
         "vite": "^8.0.0-beta.14",
       },
       "peerDependencies": {
-        "@cordy/electro": "1.0.8",
+        "@cordy/electro": "1.1.0",
         "electron": ">=40.4.1",
         "vite": ">=8.0.0",
       },
     },
     "packages/electro-generator": {
       "name": "@cordy/electro-generator",
-      "version": "1.0.9",
+      "version": "1.1.0",
       "dependencies": {
         "oxc-parser": "^0.114.0",
         "tinyglobby": "^0.2.15",
@@ -84,7 +84,7 @@
         "vitest": "v4.1.0-beta.3",
       },
       "peerDependencies": {
-        "@cordy/electro": "1.0.8",
+        "@cordy/electro": "1.1.0",
       },
     },
   },
@@ -830,8 +830,6 @@
     "@babel/traverse/@babel/generator": ["@babel/generator@7.29.1", "", { "dependencies": { "@babel/parser": "^7.29.0", "@babel/types": "^7.29.0", "@jridgewell/gen-mapping": "^0.3.12", "@jridgewell/trace-mapping": "^0.3.28", "jsesc": "^3.0.2" } }, "sha512-qsaF+9Qcm2Qv8SRIMMscAvG4O3lJ0F1GuMo5HR/Bp02LopNgnZBC/EkbevHFeGs4ls/oPz9v+Bsmzbkbe+0dUw=="],
 
     "@babel/types/@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.28.5", "", {}, "sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q=="],
-
-    "@cordy/electro-cli/@cordy/electro-generator": ["@cordy/electro-generator@1.0.8", "", { "dependencies": { "oxc-parser": "^0.114.0", "tinyglobby": "^0.2.15" }, "peerDependencies": { "@cordy/electro": "1.0.8" } }, "sha512-HbgOiRYXhDG7wXG0fs/B/2F/ddr3d2ZzrNgS9xWOoKLVJtzflrYDSfYGTC9KuXefD2gNcbPBualHVJ955NQ88Q=="],
 
     "@electron/get/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
