@@ -1,10 +1,10 @@
-import type { BaseWindow } from "electron";
+import type { BaseWindow, BaseWindowConstructorOptions } from "electron";
 
 export type WindowId = string;
 
 export interface WindowConfig<TApi = void> {
     id: WindowId;
-    options?: Record<string, unknown>;
+    options?: BaseWindowConstructorOptions;
     api?: (window: BaseWindow) => TApi;
 }
 

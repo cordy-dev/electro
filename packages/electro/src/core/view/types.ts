@@ -1,4 +1,4 @@
-import type { WebContentsView } from "electron";
+import type { WebContentsView, WebPreferences } from "electron";
 
 export type ViewId = string;
 
@@ -7,13 +7,13 @@ export interface RendererViewConfig {
     id: ViewId;
     /** Link to a defineView() name. `true` = use `id` as the renderer name. */
     renderer: true | string;
-    webPreferences?: Record<string, unknown>;
+    webPreferences?: WebPreferences;
 }
 
 /** Config for dynamic views (no renderer entry, programmatic). */
 export interface DynamicViewConfig {
     id: ViewId;
-    webPreferences?: Record<string, unknown>;
+    webPreferences?: WebPreferences;
 }
 
 export type ViewConfig = RendererViewConfig | DynamicViewConfig;
