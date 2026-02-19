@@ -1,5 +1,5 @@
-import { WindowAccessor } from "../../window/accessor";
-import type { WindowManager } from "../../window/manager";
+import type { ViewManager } from "../view/manager";
+import type { WindowManager } from "../window/manager";
 import { EventAccessor } from "../event-bus/accessor";
 import type { EventBus } from "../event-bus/event-bus";
 import { ServiceAccessor } from "../service/accessor";
@@ -64,11 +64,14 @@ export class Feature<FId extends FeatureId> {
                     throw new Error("Events not yet initialized");
                 },
             },
-            createWindow: () => {
-                throw new Error("Window manager not available");
-            },
             getWindow: () => {
                 throw new Error("Window manager not available");
+            },
+            createView: () => {
+                throw new Error("View manager not available");
+            },
+            getView: () => {
+                throw new Error("View manager not available");
             },
             logger: this.logger,
             signal: this.controller.signal,
@@ -96,8 +99,9 @@ export class Feature<FId extends FeatureId> {
         manager: FeatureManager,
         eventBus?: EventBus,
         windowManager?: WindowManager,
+        viewManager?: ViewManager,
     ): Promise<void> {
-        this.buildContext(features, manager, eventBus, windowManager);
+        this.buildContext(features, manager, eventBus, windowManager, viewManager);
         await this.config.onInitialize?.(this.context);
     }
 
@@ -126,6 +130,7 @@ export class Feature<FId extends FeatureId> {
         manager: FeatureManager,
         eventBus?: EventBus,
         windowManager?: WindowManager,
+        viewManager?: ViewManager,
     ): void {
         this.context.signal = this.controller.signal;
         this.context.logger = this.logger;
@@ -198,11 +203,25 @@ export class Feature<FId extends FeatureId> {
             };
         }
 
-        // build window context (Electron layer only)
+        // build window context
         if (windowManager) {
-            const windowAccessor = new WindowAccessor(windowManager);
-            this.context.createWindow = (name: string) => windowAccessor.createWindow(name);
-            this.context.getWindow = (name: string) => windowAccessor.getWindow(name);
+            this.context.getWindow = (id: string) => {
+                return windowManager.get(id);
+            };
+        }
+
+        // build view context
+        if (viewManager) {
+            this.context.createView = (id: string) => {
+                const inst = viewManager.get(id);
+                if (!inst) throw new Error(`View "${id}" not registered`);
+                return inst.create();
+            };
+            this.context.getView = (id: string) => {
+                const inst = viewManager.get(id);
+                if (!inst) return null;
+                return inst.view();
+            };
         }
     }
 }

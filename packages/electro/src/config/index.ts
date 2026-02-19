@@ -1,14 +1,11 @@
 export { defineConfig } from "./define-config";
 export { defineRuntime } from "./define-runtime";
-export { defineWindow } from "./define-window";
+export { defineView } from "./define-view";
 export type {
     DefineConfigInput,
     DefineRuntimeInput,
-    DefineWindowInput,
+    DefineViewInput,
     ElectroConfig,
     RuntimeDefinition,
-    WindowBehavior,
-    WindowCloseBehavior,
-    WindowDefinition,
-    WindowLifecycle,
+    ViewDefinition,
 } from "./types";

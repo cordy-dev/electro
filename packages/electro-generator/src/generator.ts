@@ -1,12 +1,12 @@
 /**
  * Code Generator — produces preload scripts, bridge types, and context types.
  *
- * Takes a ScanResult + window definitions and emits generated files.
- * Uses PolicyEngine for deny-by-default per-window filtering.
+ * Takes a ScanResult + view definitions and emits generated files.
+ * Uses PolicyEngine for deny-by-default per-view filtering.
  */
 
 import { dirname, join, relative } from "node:path";
-import type { WindowDefinition } from "@cordy/electro";
+import type { ViewDefinition } from "@cordy/electro";
 import { PolicyEngine } from "@cordy/electro";
 import type { GeneratedFile, ScannedFeature, ScanResult } from "./types";
 
@@ -31,18 +31,18 @@ function methodStub(featureId: string, serviceId: string, method: string): strin
 }
 
 /**
- * Generate a preload script for a specific window.
+ * Generate a preload script for a specific view.
  *
  * Structure: `window.electro.{featureId}.{serviceId}.{method}()`
  * Only EXPOSED scope services are included.
  */
 function generatePreload(
-    windowName: string,
+    viewName: string,
     features: ScannedFeature[],
     policy: PolicyEngine,
     preloadExtension?: string,
 ): GeneratedFile {
-    const allowedFeatures = features.filter((f) => policy.canAccess(windowName, f.id));
+    const allowedFeatures = features.filter((f) => policy.canAccess(viewName, f.id));
 
     // Filter to exposed services only
     const featureEntries: string[] = [];
@@ -84,7 +84,7 @@ contextBridge.exposeInMainWorld("electro", ${bridgeObject});
     }
 
     return {
-        path: `generated/preload/${windowName}.gen.ts`,
+        path: `generated/preload/${viewName}.gen.ts`,
         content,
     };
 }
@@ -92,11 +92,11 @@ contextBridge.exposeInMainWorld("electro", ${bridgeObject});
 // ── Bridge types generator ──────────────────────────────────────────
 
 /**
- * Generate bridge type declarations for a specific window.
+ * Generate bridge type declarations for a specific view.
  * Makes `window.electro` type-safe in the renderer.
  */
-function generateBridgeTypes(windowName: string, features: ScannedFeature[], policy: PolicyEngine): GeneratedFile {
-    const allowedFeatures = features.filter((f) => policy.canAccess(windowName, f.id));
+function generateBridgeTypes(viewName: string, features: ScannedFeature[], policy: PolicyEngine): GeneratedFile {
+    const allowedFeatures = features.filter((f) => policy.canAccess(viewName, f.id));
 
     const featureTypes: string[] = [];
 
@@ -122,7 +122,7 @@ function generateBridgeTypes(windowName: string, features: ScannedFeature[], pol
         featureTypes.push(`        ${q(feature.id)}: {\n${serviceTypes.join("\n")}\n        };`);
     }
 
-    const interfaceBody = featureTypes.length > 0 ? `{\n${featureTypes.join("\n")}\n    }` : "Record<string, never>";
+    const interfaceBody = featureTypes.length > 0 ? `{\n${featureTypes.join("\n")}\n    }` : "{}";
 
     const content = `${HEADER}
 export interface ElectroBridge ${interfaceBody}
@@ -135,7 +135,7 @@ declare global {
 `;
 
     return {
-        path: `generated/windows/${windowName}.bridge.d.ts`,
+        path: `generated/views/${viewName}.bridge.d.ts`,
         content,
     };
 }
@@ -163,28 +163,24 @@ type _EventPayload<T> = T extends { payload(): infer P } ? P : unknown;
 `;
 
 /**
- * Generate feature type declarations for the main process.
- * Emits a single FeatureMap interface with per-feature entries for
- * services, tasks, and dependencies. Uses typeof import() for full type inference.
+ * Generate ViewMap entries for all defined views.
+ * All views use WebContentsView as their type.
  */
-function generateWindowTypes(windows: readonly WindowDefinition[]): string {
-    if (windows.length === 0) return "";
+function generateViewTypes(views: readonly ViewDefinition[]): string {
+    if (views.length === 0) return "";
 
     const entries: string[] = [];
-    for (const win of windows) {
-        const windowType = win.type ?? "base-window";
-        const electronType =
-            windowType === "browser-window" ? 'import("electron").BrowserWindow' : 'import("electron").BaseWindow';
-        entries.push(`        "${win.name}": ${electronType};`);
+    for (const view of views) {
+        entries.push(`        "${view.name}": import("electron").WebContentsView;`);
     }
 
-    return `\n    interface WindowMap {\n${entries.join("\n")}\n    }\n`;
+    return `\n    interface ViewMap {\n${entries.join("\n")}\n    }\n`;
 }
 
 function generateFeatureTypes(
     features: ScannedFeature[],
     srcDir: string,
-    windows: readonly WindowDefinition[],
+    views: readonly ViewDefinition[],
 ): GeneratedFile {
     const seenFeatures = new Set<string>();
     const featureBlocks: string[] = [];
@@ -283,7 +279,7 @@ function generateFeatureTypes(
     const mapBody = featureBlocks.length > 0 ? `{\n${featureBlocks.join("\n")}\n    }` : "{}";
     const svcOwnerBody = svcOwnerEntries.length > 0 ? `{\n${svcOwnerEntries.join("\n")}\n    }` : "{}";
     const taskOwnerBody = taskOwnerEntries.length > 0 ? `{\n${taskOwnerEntries.join("\n")}\n    }` : "{}";
-    const windowMapBlock = generateWindowTypes(windows);
+    const viewMapBlock = generateViewTypes(views);
 
     const content = `${FEATURE_TYPES_HEADER}
 declare module "@cordy/electro" {
@@ -292,7 +288,7 @@ declare module "@cordy/electro" {
     interface ServiceOwnerMap ${svcOwnerBody}
 
     interface TaskOwnerMap ${taskOwnerBody}
-${windowMapBlock}}
+${viewMapBlock}}
 `;
 
     return { path: "electro-env.d.ts", content };
@@ -302,7 +298,7 @@ ${windowMapBlock}}
 
 export interface GeneratorInput {
     scanResult: ScanResult;
-    windows: readonly WindowDefinition[];
+    views: readonly ViewDefinition[];
     /** Root output directory (e.g. `.electro/`). Generated files go into `generated/` subdirectory. */
     outputDir: string;
     /** Source directory where `electro-env.d.ts` will be written (e.g. `src/`). */
@@ -317,27 +313,27 @@ export interface GeneratorOutput {
 }
 
 /**
- * Generate all output files from scan results and window definitions.
+ * Generate all output files from scan results and view definitions.
  */
 export function generate(input: GeneratorInput): GeneratorOutput {
-    const { scanResult, windows, outputDir, srcDir } = input;
-    const policy = new PolicyEngine(windows);
+    const { scanResult, views, outputDir, srcDir } = input;
+    const policy = new PolicyEngine(views);
     const files: GeneratedFile[] = [];
 
-    for (const win of windows) {
+    for (const view of views) {
         // Warn on unknown features
         const knownIds = new Set(scanResult.features.map((f) => f.id));
-        for (const fId of win.features ?? []) {
+        for (const fId of view.features ?? []) {
             if (!knownIds.has(fId)) {
-                console.warn(`[generator] Window "${win.name}" references unknown feature "${fId}"`);
+                console.warn(`[generator] View "${view.name}" references unknown feature "${fId}"`);
             }
         }
 
-        files.push(generatePreload(win.name, scanResult.features, policy, win.preload));
-        files.push(generateBridgeTypes(win.name, scanResult.features, policy));
+        files.push(generatePreload(view.name, scanResult.features, policy, view.preload));
+        files.push(generateBridgeTypes(view.name, scanResult.features, policy));
     }
 
-    const envTypes = generateFeatureTypes(scanResult.features, srcDir, windows);
+    const envTypes = generateFeatureTypes(scanResult.features, srcDir, views);
 
     return { files, envTypes };
 }

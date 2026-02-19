@@ -21,32 +21,32 @@ export function validateConfig(config: ElectroConfig): void {
         process.exit(1);
     }
 
-    const windows = config.windows ?? [];
+    const views = config.views ?? [];
 
-    // Duplicate window names
+    // Duplicate view names
     const names = new Set<string>();
-    for (const win of windows) {
-        if (names.has(win.name)) {
-            error(`Duplicate window name "${win.name}". Window names must be unique.`);
+    for (const view of views) {
+        if (names.has(view.name)) {
+            error(`Duplicate view name "${view.name}". View names must be unique.`);
             process.exit(1);
         }
-        names.add(win.name);
+        names.add(view.name);
     }
 
-    // Window entry files must exist
-    for (const win of windows) {
-        const winDir = dirname(win.__source);
-        const winEntry = resolve(winDir, win.entry);
-        if (!existsSync(winEntry)) {
-            error(`Window "${win.name}" entry not found: ${winEntry}`);
+    // View entry files must exist
+    for (const view of views) {
+        const viewDir = dirname(view.__source);
+        const viewEntry = resolve(viewDir, view.entry);
+        if (!existsSync(viewEntry)) {
+            error(`View "${view.name}" entry not found: ${viewEntry}`);
             process.exit(1);
         }
     }
 
     // Empty features array is suspicious
-    for (const win of windows) {
-        if (win.features && win.features.length === 0) {
-            warn(`Window "${win.name}" has an empty features array — it won't have access to any services.`);
+    for (const view of views) {
+        if (view.features && view.features.length === 0) {
+            warn(`View "${view.name}" has an empty features array — it won't have access to any services.`);
         }
     }
 }

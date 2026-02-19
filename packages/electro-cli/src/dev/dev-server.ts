@@ -108,12 +108,12 @@ export class DevServer {
 
         // Track config paths for watching
         this.configPaths.add(loaded.configPath);
-        for (const win of this.config.windows ?? []) {
-            this.configPaths.add(win.__source);
+        for (const view of this.config.views ?? []) {
+            this.configPaths.add(view.__source);
         }
 
         // Print session banner
-        const windows = this.config.windows ?? [];
+        const views = this.config.views ?? [];
         const srcDir = resolve(this.root, "src");
 
         const mainSourceDir = dirname(this.config.runtime.__source);
@@ -122,9 +122,9 @@ export class DevServer {
         const sessionMeta: SessionMeta = {
             root: this.root,
             main: mainEntry,
-            preload: windows.length > 0 ? resolve(this.outputDir, "generated/preload") : null,
-            renderer: windows.length > 0 ? resolve(this.root, dirname(relative(this.root, windows[0].__source))) : null,
-            windows: windows.map((w) => ({
+            preload: views.length > 0 ? resolve(this.outputDir, "generated/preload") : null,
+            renderer: views.length > 0 ? resolve(this.root, dirname(relative(this.root, views[0].__source))) : null,
+            windows: views.map((w) => ({
                 name: w.name,
                 entry: resolve(dirname(w.__source), w.entry),
             })),
@@ -142,7 +142,7 @@ export class DevServer {
         }
 
         // 3. Start renderer dev server
-        if (windows.length > 0) {
+        if (views.length > 0) {
             const rendererTimer = startTimer();
             try {
                 await this.startRenderer();
@@ -165,7 +165,7 @@ export class DevServer {
         const externals = await resolveExternals(this.root);
 
         // 5. Build preload (watch mode)
-        if (windows.length > 0) {
+        if (views.length > 0) {
             const preloadTimer = startTimer();
             try {
                 await this.buildPreload(externals);
@@ -255,7 +255,7 @@ export class DevServer {
 
         const { files, envTypes } = generate({
             scanResult,
-            windows: this.config!.windows ?? [],
+            views: this.config!.views ?? [],
             outputDir,
             srcDir,
         });
@@ -274,12 +274,12 @@ export class DevServer {
     }
 
     private async startRenderer(): Promise<void> {
-        const windows = this.config!.windows ?? [];
-        const userViteConfigs = windows.filter((w) => w.vite).map((w) => w.vite!);
+        const views = this.config!.views ?? [];
+        const userViteConfigs = views.filter((w) => w.vite).map((w) => w.vite!);
 
         const rendererConfig = createRendererConfig({
             root: this.root,
-            windows,
+            views,
             userViteConfigs: userViteConfigs.length > 0 ? userViteConfigs : undefined,
             logLevel: this.logLevel,
             clearScreen: this.clearScreen,
@@ -294,12 +294,12 @@ export class DevServer {
     }
 
     private async buildPreload(externals: (string | RegExp)[]): Promise<void> {
-        const windows = this.config!.windows ?? [];
+        const views = this.config!.views ?? [];
         const preloadOutDir = resolve(this.outputDir, "preload");
 
         const input: Record<string, string> = {};
-        for (const win of windows) {
-            input[win.name] = resolve(this.outputDir, `generated/preload/${win.name}.gen.ts`);
+        for (const view of views) {
+            input[view.name] = resolve(this.outputDir, `generated/preload/${view.name}.gen.ts`);
         }
 
         const firstEntry = Object.values(input)[0];
@@ -371,16 +371,6 @@ export class DevServer {
         const sourceDir = dirname(this.config!.runtime.__source);
         const entry = resolve(sourceDir, runtimeEntry);
 
-        // Serialize window definitions for runtime injection
-        const windowDefs = (this.config!.windows ?? []).map((w) => ({
-            name: w.name,
-            type: w.type,
-            lifecycle: w.lifecycle,
-            autoShow: w.autoShow,
-            behavior: w.behavior,
-            window: w.window,
-        }));
-
         const mainConfig = createNodeConfig({
             scope: "main",
             root: this.root,
@@ -393,9 +383,6 @@ export class DevServer {
             clearScreen: this.clearScreen,
             userViteConfig: this.config!.runtime.vite,
             sourcemap: this.sourcemap,
-            define: {
-                __ELECTRO_WINDOW_DEFINITIONS__: JSON.stringify(windowDefs),
-            },
         });
 
         const self = this;
@@ -447,11 +434,11 @@ export class DevServer {
             const port = typeof addr === "object" && addr ? addr.port : 5173;
             env.ELECTRO_RENDERER_BASE = `http://localhost:${port}`;
 
-            for (const win of this.config!.windows ?? []) {
-                const winSourceDir = dirname(win.__source);
-                const entryPath = resolve(winSourceDir, win.entry);
+            for (const view of this.config!.views ?? []) {
+                const viewSourceDir = dirname(view.__source);
+                const entryPath = resolve(viewSourceDir, view.entry);
                 const relPath = relative(this.root, entryPath);
-                env[`ELECTRO_DEV_URL_${win.name}`] = `http://localhost:${port}/${relPath}`;
+                env[`ELECTRO_DEV_URL_${view.name}`] = `http://localhost:${port}/${relPath}`;
             }
         }
 

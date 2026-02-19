@@ -1,18 +1,14 @@
 // ── Config (build-time) ──────────────────────────────────────────────
 export { defineConfig } from "./config/define-config";
 export { defineRuntime } from "./config/define-runtime";
-export { defineWindow } from "./config/define-window";
+export { defineView } from "./config/define-view";
 export type {
     DefineConfigInput,
     DefineRuntimeInput,
-    DefineWindowInput,
+    DefineViewInput,
     ElectroConfig,
     RuntimeDefinition,
-    WindowBehavior,
-    WindowCloseBehavior,
-    WindowDefinition,
-    WindowLifecycle,
-    WindowType,
+    ViewDefinition,
 } from "./config/types";
 // ── Events ──────────────────────────────────────────────────────────
 export { EventAccessor } from "./core/event-bus/accessor";
@@ -54,11 +50,16 @@ export type {
     ServiceOwnerMap,
     TaskOwnerMap,
     TypedContext,
-    WindowMap,
+    ViewMap,
+    WindowApiMap,
 } from "./core/types";
+// ── Window (runtime) ────────────────────────────────────────────────
+export { createWindow } from "./core/window/helpers";
+export type { CreatedWindow, WindowConfig, WindowId, WindowInstance } from "./core/window/types";
+// ── View (runtime) ──────────────────────────────────────────────────
+export { createView } from "./core/view/helpers";
+export type { CreatedView, ElectroView, ViewConfig, ViewId, ViewInstance } from "./core/view/types";
 // ── Policy ──────────────────────────────────────────────────────────
 export { PolicyEngine } from "./policy/engine";
 export type { PolicyResult } from "./policy/types";
 export { PolicyDecision } from "./policy/types";
-// ── Window ──────────────────────────────────────────────────────────
-export type { ElectroWindow, WindowFactory, WindowInfo } from "./window/types";

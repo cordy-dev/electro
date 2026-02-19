@@ -21,8 +21,8 @@ export async function generate(options: GenerateOptions): Promise<void> {
         process.exit(1);
     }
 
-    const windows = config.windows ?? [];
-    console.log(`Loaded config with ${windows.length} window(s)`);
+    const views = config.views ?? [];
+    console.log(`Loaded config with ${views.length} view(s)`);
 
     // 2. Scan source files
     const srcDir = resolve(process.cwd(), "src");
@@ -31,7 +31,7 @@ export async function generate(options: GenerateOptions): Promise<void> {
     console.log(`Found ${scanResult.features.length} feature(s)`);
 
     // 3. Generate output files
-    const { files, envTypes } = generateFiles({ scanResult, windows, outputDir, srcDir });
+    const { files, envTypes } = generateFiles({ scanResult, views, outputDir, srcDir });
     console.log(`Generating ${files.length + 1} file(s)...`);
 
     // 4. Write to disk

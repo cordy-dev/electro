@@ -1,18 +1,18 @@
 import type { DefineConfigInput, ElectroConfig } from "./types";
 
 export function defineConfig(input: DefineConfigInput): ElectroConfig {
-    const windows = input.windows ?? [];
+    const views = input.views ?? [];
 
     const seen = new Set<string>();
-    for (const win of windows) {
-        if (seen.has(win.name)) {
-            throw new Error(`[electro] defineConfig: duplicate window name "${win.name}"`);
+    for (const view of views) {
+        if (seen.has(view.name)) {
+            throw new Error(`[electro] defineConfig: duplicate view name "${view.name}"`);
         }
-        seen.add(win.name);
+        seen.add(view.name);
     }
 
     return {
         runtime: input.runtime,
-        windows,
+        views,
     } as ElectroConfig;
 }

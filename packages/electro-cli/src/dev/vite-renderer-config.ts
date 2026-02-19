@@ -1,14 +1,14 @@
 import { dirname, resolve } from "node:path";
-import type { WindowDefinition } from "@cordy/electro";
+import type { ViewDefinition } from "@cordy/electro";
 import type { InlineConfig, Logger, UserConfig } from "vite";
 import { mergeConfig } from "vite";
 
 export interface RendererConfigOptions {
     /** Project root */
     root: string;
-    /** Window definitions from config */
-    windows: readonly WindowDefinition[];
-    /** User Vite configs to merge (from window definitions) */
+    /** View definitions from config */
+    views: readonly ViewDefinition[];
+    /** User Vite configs to merge (from view definitions) */
     userViteConfigs?: UserConfig[];
     /** Vite log level override */
     logLevel?: "info" | "warn" | "error" | "silent";
@@ -32,12 +32,12 @@ function resolveSourcemap(mode?: string): boolean | "inline" | "hidden" {
 }
 
 export function createRendererConfig(opts: RendererConfigOptions): InlineConfig {
-    // Build multi-page input from window definitions
-    // Each window entry is relative to its __source directory
+    // Build multi-page input from view definitions
+    // Each view entry is relative to its __source directory
     const input: Record<string, string> = {};
-    for (const win of opts.windows) {
-        const sourceDir = dirname(win.__source);
-        input[win.name] = resolve(sourceDir, win.entry);
+    for (const view of opts.views) {
+        const sourceDir = dirname(view.__source);
+        input[view.name] = resolve(sourceDir, view.entry);
     }
 
     const isBuild = !!opts.outDir;
@@ -76,7 +76,7 @@ export function createRendererConfig(opts: RendererConfigOptions): InlineConfig 
         clearScreen: opts.clearScreen,
     };
 
-    // Merge all window vite configs
+    // Merge all view vite configs
     if (opts.userViteConfigs?.length) {
         let merged = config;
         for (const userConfig of opts.userViteConfigs) {

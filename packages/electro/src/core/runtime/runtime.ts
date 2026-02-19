@@ -1,6 +1,3 @@
-import type { WindowDefinition } from "../../config/types";
-import { createDefaultWindowFactory } from "../../window/default-factory";
-import { WindowManager } from "../../window/manager";
 import { EventBus } from "../event-bus/event-bus";
 import { FeatureStatus } from "../feature/enums";
 import { FeatureManager } from "../feature/manager";
@@ -8,10 +5,10 @@ import type { FeatureConfig, FeatureId } from "../feature/types";
 import { createConsoleHandler } from "../logger/console-handler";
 import { Logger } from "../logger/logger";
 import { StateMachine } from "../state-machine/state-machine";
+import { ViewManager } from "../view/manager";
+import { WindowManager } from "../window/manager";
 import { RuntimeState } from "./enums";
 import type { RuntimeConfig } from "./types";
-
-declare const __ELECTRO_WINDOW_DEFINITIONS__: undefined | Array<Partial<WindowDefinition>>;
 
 const RUNTIME_TRANSITIONS: Record<RuntimeState, RuntimeState[]> = {
     [RuntimeState.CREATED]: [RuntimeState.STARTING],
@@ -27,7 +24,8 @@ export class Runtime {
     readonly logger: Logger;
     private readonly featureManager: FeatureManager;
     private readonly eventBus: EventBus;
-    private windowManager: WindowManager | null = null;
+    private readonly windowManager: WindowManager;
+    private readonly viewManager: ViewManager;
 
     constructor(config?: RuntimeConfig) {
         this.state = new StateMachine<RuntimeState>({
@@ -50,17 +48,26 @@ export class Runtime {
             }
         }
 
+        // Register windows
+        this.windowManager = new WindowManager();
+        for (const win of config?.windows ?? []) {
+            this.windowManager.register(win);
+        }
+
+        // Register views
+        this.viewManager = new ViewManager();
+        for (const view of config?.views ?? []) {
+            this.viewManager.register(view);
+        }
+
+        // Pass managers to feature manager
+        this.featureManager.setWindowManager(this.windowManager);
+        this.featureManager.setViewManager(this.viewManager);
+
         // Register initial features
         if (config?.features) {
             this.featureManager.register(config.features);
         }
-    }
-
-    /** @internal Inject window manager (called by Electron layer before start). */
-    _injectWindowManager(windowManager: WindowManager): void {
-        this.state.assertState(RuntimeState.CREATED);
-        this.windowManager = windowManager;
-        this.featureManager.setWindowManager(windowManager);
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: variance — typed FeatureConfig<"x"> must be assignable here
@@ -70,16 +77,6 @@ export class Runtime {
     }
 
     async start(): Promise<void> {
-        // Auto-setup window manager from build-injected definitions
-        if (!this.windowManager && typeof __ELECTRO_WINDOW_DEFINITIONS__ !== "undefined") {
-            const factory = createDefaultWindowFactory();
-            const wm = new WindowManager(factory);
-            for (const def of __ELECTRO_WINDOW_DEFINITIONS__) {
-                wm.registerDefinition(def as WindowDefinition);
-            }
-            this._injectWindowManager(wm);
-        }
-
         this.state.transition(RuntimeState.STARTING);
         try {
             await this.featureManager.bootstrap();
@@ -94,7 +91,8 @@ export class Runtime {
         this.state.assertState(RuntimeState.RUNNING);
         this.state.transition(RuntimeState.STOPPING);
         await this.featureManager.shutdown();
-        this.windowManager?.destroyAll();
+        this.viewManager.destroyAll();
+        this.windowManager.destroyAll();
         this.state.transition(RuntimeState.STOPPED);
     }
 

@@ -1,4 +1,5 @@
-import type { WindowManager } from "../../window/manager";
+import type { ViewManager } from "../view/manager";
+import type { WindowManager } from "../window/manager";
 import type { EventBus } from "../event-bus/event-bus";
 import type { LoggerContext } from "../types";
 import { FeatureStatus } from "./enums";
@@ -12,15 +13,21 @@ export class FeatureManager {
     /** Global task ownership: taskId → featureId. */
     private readonly taskOwners = new Map<string, string>();
     private windowManager: WindowManager | null = null;
+    private viewManager: ViewManager | null = null;
 
     constructor(
         private logger: LoggerContext,
         private eventBus: EventBus | undefined = undefined,
     ) {}
 
-    /** @internal Set the window manager (called by Electron layer before bootstrap). */
+    /** @internal Set the window manager (called by Runtime before bootstrap). */
     setWindowManager(windowManager: WindowManager): void {
         this.windowManager = windowManager;
+    }
+
+    /** @internal Set the view manager (called by Runtime before bootstrap). */
+    setViewManager(viewManager: ViewManager): void {
+        this.viewManager = viewManager;
     }
 
     /**
@@ -125,7 +132,13 @@ export class FeatureManager {
                 features.push(this.registry.get(dep)!);
             }
 
-            await feature.initialize(features, this, this.eventBus, this.windowManager ?? undefined);
+            await feature.initialize(
+                features,
+                this,
+                this.eventBus,
+                this.windowManager ?? undefined,
+                this.viewManager ?? undefined,
+            );
             feature.transition(FeatureStatus.READY);
         } catch (err) {
             feature.transition(FeatureStatus.ERROR);

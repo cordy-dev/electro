@@ -1,4 +1,4 @@
-import { defineWindow } from "@cordy/electro";
+import { defineView } from "@cordy/electro";
 import { describe, expect, it, vi } from "vitest";
 import { generate } from "./generator";
 import type { ScanResult } from "./types";
@@ -95,13 +95,13 @@ function makeScanResult(overrides?: Partial<ScanResult>): ScanResult {
     };
 }
 
-function makeWindow(name: string, features: string[]) {
-    return defineWindow({ name, entry: `./src/${name}.html`, features });
+function makeView(name: string, features: string[]) {
+    return defineView({ name, entry: `./src/${name}.html`, features });
 }
 
 const defaultInput = (overrides?: Partial<Parameters<typeof generate>[0]>) => ({
     scanResult: makeScanResult(),
-    windows: [makeWindow("main", ["billing", "auth", "core"])],
+    views: [makeView("main", ["billing", "auth", "core"])],
     outputDir: "/project/.electro",
     srcDir: "/project/src",
     ...overrides,
@@ -115,13 +115,13 @@ describe("generate()", () => {
         expect(files).toHaveLength(2);
         expect(files.map((f) => f.path)).toEqual([
             "generated/preload/main.gen.ts",
-            "generated/windows/main.bridge.d.ts",
+            "generated/views/main.bridge.d.ts",
         ]);
         expect(envTypes.path).toBe("electro-env.d.ts");
     });
 
     it("generates preload with only exposed services", () => {
-        const { files } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { files } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
         const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
         // Should include billing.payment and billing.invoice (exposed)
@@ -132,8 +132,8 @@ describe("generate()", () => {
         expect(preload.content).not.toContain("audit");
     });
 
-    it("respects window policy — denies unlisted features", () => {
-        const { files } = generate(defaultInput({ windows: [makeWindow("pip", ["core"])] }));
+    it("respects view policy — denies unlisted features", () => {
+        const { files } = generate(defaultInput({ views: [makeView("pip", ["core"])] }));
 
         const preload = files.find((f) => f.path === "generated/preload/pip.gen.ts")!;
         // Only core should be in the preload
@@ -142,12 +142,12 @@ describe("generate()", () => {
         expect(preload.content).not.toContain("auth");
     });
 
-    it("generates per-window preloads with different allowed features", () => {
+    it("generates per-view preloads with different allowed features", () => {
         const { files } = generate(
-            defaultInput({ windows: [makeWindow("main", ["billing", "auth", "core"]), makeWindow("pip", ["core"])] }),
+            defaultInput({ views: [makeView("main", ["billing", "auth", "core"]), makeView("pip", ["core"])] }),
         );
 
-        // 2 windows × 2 files = 4
+        // 2 views × 2 files = 4
         expect(files).toHaveLength(4);
 
         const mainPreload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
@@ -158,9 +158,9 @@ describe("generate()", () => {
     });
 
     it("generates bridge types with correct structure", () => {
-        const { files } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { files } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
-        const bridge = files.find((f) => f.path === "generated/windows/main.bridge.d.ts")!;
+        const bridge = files.find((f) => f.path === "generated/views/main.bridge.d.ts")!;
         expect(bridge.content).toContain("interface ElectroBridge");
         expect(bridge.content).toContain("interface Window");
         expect(bridge.content).toContain("electro: ElectroBridge");
@@ -169,7 +169,7 @@ describe("generate()", () => {
     });
 
     it("generates FeatureMap with per-feature services", () => {
-        const { envTypes } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { envTypes } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
         expect(envTypes.content).toContain('declare module "@cordy/electro"');
         expect(envTypes.content).toContain("interface FeatureMap");
@@ -179,7 +179,7 @@ describe("generate()", () => {
     });
 
     it("generates FeatureMap with per-feature tasks", () => {
-        const { envTypes } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { envTypes } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
         expect(envTypes.content).toContain("interface FeatureMap");
         expect(envTypes.content).toContain('"sync-data"');
@@ -224,7 +224,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [],
+                views: [],
             }),
         );
 
@@ -233,7 +233,7 @@ describe("generate()", () => {
     });
 
     it("generates FeatureMap entries for all features", () => {
-        const { envTypes } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { envTypes } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
         expect(envTypes.content).toContain("interface FeatureMap");
         expect(envTypes.content).toContain('"billing"');
@@ -275,7 +275,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [makeWindow("main", [])],
+                views: [makeView("main", [])],
             }),
         );
 
@@ -306,7 +306,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [makeWindow("main", [])],
+                views: [makeView("main", [])],
             }),
         );
 
@@ -317,7 +317,7 @@ describe("generate()", () => {
     });
 
     it("calculates correct relative paths from srcDir to source files", () => {
-        const { envTypes } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { envTypes } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
         // src/electro-env.d.ts → src/features/billing/services/payment.ts
         expect(envTypes.content).toContain('./features/billing/services/payment"');
@@ -325,7 +325,7 @@ describe("generate()", () => {
 
     it("handles empty features list for feature types", () => {
         const { envTypes } = generate(
-            defaultInput({ scanResult: { features: [] }, windows: [makeWindow("main", [])] }),
+            defaultInput({ scanResult: { features: [] }, views: [makeView("main", [])] }),
         );
 
         expect(envTypes.content).toContain("interface FeatureMap {}");
@@ -334,35 +334,35 @@ describe("generate()", () => {
     });
 
     it("generates empty namespace for features without exposed services", () => {
-        const { files } = generate(defaultInput({ windows: [makeWindow("main", ["core"])] }));
+        const { files } = generate(defaultInput({ views: [makeView("main", ["core"])] }));
 
         const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
         expect(preload.content).toContain("core: {},");
     });
 
     it("includes preload extension import when specified", () => {
-        const win = defineWindow({
+        const v = defineView({
             name: "main",
             entry: "./src/main.html",
             features: ["billing"],
             preload: "./extend.ts",
         });
 
-        const { files } = generate(defaultInput({ windows: [win] }));
+        const { files } = generate(defaultInput({ views: [v] }));
 
         const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
         expect(preload.content).toContain('import "./extend.ts"');
     });
 
     it("handles empty features list", () => {
-        const { files } = generate(defaultInput({ scanResult: { features: [] }, windows: [makeWindow("main", [])] }));
+        const { files } = generate(defaultInput({ scanResult: { features: [] }, views: [makeView("main", [])] }));
 
         const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
         expect(preload.content).toContain('electro", {})');
     });
 
     it("adds auto-generated header to all files", () => {
-        const { files, envTypes } = generate(defaultInput({ windows: [makeWindow("main", ["billing"])] }));
+        const { files, envTypes } = generate(defaultInput({ views: [makeView("main", ["billing"])] }));
 
         for (const file of [...files, envTypes]) {
             expect(file.content).toContain("Auto-generated by Electro codegen. Do not edit.");
@@ -394,28 +394,28 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [makeWindow("main", ["empty"])],
+                views: [makeView("main", ["empty"])],
             }),
         );
 
         const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
         expect(preload.content).toContain("stub: {},");
 
-        const bridge = files.find((f) => f.path === "generated/windows/main.bridge.d.ts")!;
+        const bridge = files.find((f) => f.path === "generated/views/main.bridge.d.ts")!;
         expect(bridge.content).toContain("stub: Record<string, never>");
     });
 
-    it("handles window with no features property", () => {
-        const win = defineWindow({ name: "bare", entry: "./src/bare.html" });
-        const { files } = generate(defaultInput({ windows: [win] }));
+    it("handles view with no features property", () => {
+        const v = defineView({ name: "bare", entry: "./src/bare.html" });
+        const { files } = generate(defaultInput({ views: [v] }));
         const preload = files.find((f) => f.path === "generated/preload/bare.gen.ts")!;
         expect(preload.content).not.toContain("billing");
         expect(preload.content).not.toContain("auth");
     });
 
-    it("warns when window references unknown feature", () => {
+    it("warns when view references unknown feature", () => {
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-        generate(defaultInput({ windows: [makeWindow("main", ["nonexistent"])] }));
+        generate(defaultInput({ views: [makeView("main", ["nonexistent"])] }));
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown feature "nonexistent"'));
         warn.mockRestore();
     });
@@ -454,7 +454,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [],
+                views: [],
             }),
         );
 
@@ -508,7 +508,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [],
+                views: [],
             }),
         );
 
@@ -533,7 +533,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [],
+                views: [],
             }),
         );
 
@@ -580,7 +580,7 @@ describe("generate()", () => {
                         },
                     ],
                 },
-                windows: [],
+                views: [],
             }),
         );
 
@@ -593,7 +593,7 @@ describe("generate()", () => {
         const { envTypes } = generate(
             defaultInput({
                 scanResult,
-                windows: [makeWindow("main", ["billing"])],
+                views: [makeView("main", ["billing"])],
             }),
         );
 

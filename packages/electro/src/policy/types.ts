@@ -2,12 +2,12 @@
 export enum PolicyDecision {
     ALLOWED = "ALLOWED",
     ACCESS_DENIED = "ACCESS_DENIED",
-    WINDOW_NOT_FOUND = "WINDOW_NOT_FOUND",
+    VIEW_NOT_FOUND = "VIEW_NOT_FOUND",
 }
 
 /** Result of a policy check with context. */
 export interface PolicyResult {
     readonly decision: PolicyDecision;
-    readonly windowName: string;
+    readonly viewName: string;
     readonly featureId: string;
 }

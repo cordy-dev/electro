@@ -48,7 +48,7 @@ export async function build(options: BuildOptions): Promise<void> {
     const codegenDir = resolve(root, ".electro");
 
     // 3. Print session banner
-    const windows = config.windows ?? [];
+    const views = config.views ?? [];
     const srcDir = resolve(root, "src");
     const mainSourceDir = dirname(config.runtime.__source);
     const mainEntry = resolve(mainSourceDir, config.runtime.entry);
@@ -56,10 +56,10 @@ export async function build(options: BuildOptions): Promise<void> {
     const sessionMeta: SessionMeta = {
         root,
         main: mainEntry,
-        preload: windows.length > 0 ? resolve(codegenDir, "generated/preload") : null,
-        renderer: windows.length > 0 ? resolve(root, dirname(relative(root, windows[0].__source))) : null,
+        preload: views.length > 0 ? resolve(codegenDir, "generated/preload") : null,
+        renderer: views.length > 0 ? resolve(root, dirname(relative(root, views[0].__source))) : null,
         mode: "build",
-        windows: windows.map((w) => ({
+        windows: views.map((w) => ({
             name: w.name,
             entry: resolve(dirname(w.__source), w.entry),
         })),
@@ -72,7 +72,7 @@ export async function build(options: BuildOptions): Promise<void> {
         const scanResult = await scan(srcDir);
         const { files, envTypes } = generate({
             scanResult,
-            windows,
+            views,
             outputDir: codegenDir,
             srcDir,
         });
@@ -118,7 +118,7 @@ export async function build(options: BuildOptions): Promise<void> {
     }
 
     // 7. Build preload
-    if (windows.length > 0) {
+    if (views.length > 0) {
         try {
             buildScope("preload");
             await buildPreload({
@@ -138,15 +138,15 @@ export async function build(options: BuildOptions): Promise<void> {
     }
 
     // 8. Build renderer
-    if (windows.length > 0) {
+    if (views.length > 0) {
         try {
             buildScope("renderer");
 
-            const userViteConfigs = windows.filter((w) => w.vite).map((w) => w.vite!);
+            const userViteConfigs = views.filter((w) => w.vite).map((w) => w.vite!);
 
             const rendererConfig = createRendererConfig({
                 root,
-                windows,
+                views,
                 userViteConfigs: userViteConfigs.length > 0 ? userViteConfigs : undefined,
                 logLevel: "info",
                 customLogger: logger,
@@ -157,8 +157,8 @@ export async function build(options: BuildOptions): Promise<void> {
 
             await viteBuild(rendererConfig);
 
-            // Flatten output: src/windows/main/index.html → main/index.html
-            await flattenRendererOutput(resolve(outDir, "renderer"), windows, root);
+            // Flatten output: src/views/main/index.html → main/index.html
+            await flattenRendererOutput(resolve(outDir, "renderer"), views, root);
         } catch (err) {
             stepFail("renderer", err instanceof Error ? err.message : String(err));
             process.exit(1);
@@ -186,15 +186,6 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
     const sourceDir = dirname(args.config.runtime.__source);
     const entry = resolve(sourceDir, runtimeEntry);
 
-    const windowDefs = (args.config.windows ?? []).map((w) => ({
-        name: w.name,
-        type: w.type,
-        lifecycle: w.lifecycle,
-        autoShow: w.autoShow,
-        behavior: w.behavior,
-        window: w.window,
-    }));
-
     const mainConfig = createNodeConfig({
         scope: "main",
         root: args.root,
@@ -207,9 +198,6 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
         sourcemap: args.sourcemap,
         customLogger: args.logger,
         logLevel: "info",
-        define: {
-            __ELECTRO_WINDOW_DEFINITIONS__: JSON.stringify(windowDefs),
-        },
     });
 
     await viteBuild(mainConfig);
@@ -227,11 +215,11 @@ interface PreloadBuildArgs {
 }
 
 async function buildPreload(args: PreloadBuildArgs): Promise<void> {
-    const windows = args.config.windows ?? [];
+    const views = args.config.views ?? [];
 
     const input: Record<string, string> = {};
-    for (const win of windows) {
-        input[win.name] = resolve(args.codegenDir, `generated/preload/${win.name}.gen.ts`);
+    for (const view of views) {
+        input[view.name] = resolve(args.codegenDir, `generated/preload/${view.name}.gen.ts`);
     }
 
     const firstEntry = Object.values(input)[0];
@@ -292,18 +280,18 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
  */
 async function flattenRendererOutput(
     rendererDir: string,
-    windows: readonly import("@cordy/electro").WindowDefinition[],
+    views: readonly import("@cordy/electro").ViewDefinition[],
     root: string,
 ): Promise<void> {
     const dirsToClean = new Set<string>();
 
-    for (const win of windows) {
-        const sourceDir = dirname(win.__source);
-        const entryPath = resolve(sourceDir, win.entry);
+    for (const view of views) {
+        const sourceDir = dirname(view.__source);
+        const entryPath = resolve(sourceDir, view.entry);
         const relPath = relative(root, entryPath);
 
         const oldHtmlPath = resolve(rendererDir, relPath);
-        const newHtmlPath = resolve(rendererDir, win.name, "index.html");
+        const newHtmlPath = resolve(rendererDir, view.name, "index.html");
 
         if (oldHtmlPath === newHtmlPath) continue;
 
@@ -327,7 +315,7 @@ async function flattenRendererOutput(
 
         // Track the top-level source directory for cleanup
         const topDir = relPath.split("/")[0];
-        if (topDir !== win.name) {
+        if (topDir !== view.name) {
             dirsToClean.add(resolve(rendererDir, topDir));
         }
     }

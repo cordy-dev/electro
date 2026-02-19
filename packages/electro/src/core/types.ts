@@ -1,4 +1,5 @@
-import type { ElectroWindow } from "../window/types";
+import type { ElectroView } from "./view/types";
+import type { CreatedWindow } from "./window/types";
 import type { TaskHandle } from "./task/handle";
 
 /**
@@ -15,8 +16,11 @@ export interface ServiceOwnerMap {}
 /** Maps task ID → owning feature ID. Populated by codegen. */
 export interface TaskOwnerMap {}
 
-/** Declaration-merging registry for window types. Codegen populates this. */
-export interface WindowMap {}
+/** Declaration-merging registry for view types. Codegen populates this. */
+export interface ViewMap {}
+
+/** Declaration-merging registry for window API types. Codegen populates this. */
+export interface WindowApiMap {}
 
 /** Resolve the owning feature ID for a service. Falls back to `string` (→ BaseContext). */
 export type _ServiceOwner<TId extends string> = TId extends keyof ServiceOwnerMap ? ServiceOwnerMap[TId] : string;
@@ -24,10 +28,14 @@ export type _ServiceOwner<TId extends string> = TId extends keyof ServiceOwnerMa
 /** Resolve the owning feature ID for a task. Falls back to `string` (→ BaseContext). */
 export type _TaskOwner<TId extends string> = TId extends keyof TaskOwnerMap ? TaskOwnerMap[TId] : string;
 
-// ── Window type resolution ───────────────────────────────────────────
+// ── View type resolution ────────────────────────────────────────────
 
-type _SuggestWindowKeys = (keyof WindowMap & string) | (string & {});
-type _ResolveWindow<K extends string> = K extends keyof WindowMap ? ElectroWindow<WindowMap[K]> : ElectroWindow;
+type _SuggestViewKeys = (keyof ViewMap & string) | (string & {});
+
+// ── Window type resolution ──────────────────────────────────────────
+
+type _SuggestWindowKeys = (keyof WindowApiMap & string) | (string & {});
+type _ResolveWindowApi<K extends string> = K extends keyof WindowApiMap ? WindowApiMap[K] : unknown;
 
 // ── Per-feature type resolution ──────────────────────────────────────
 
@@ -183,8 +191,9 @@ export type TypedContext<
             handler: (payload: _ResolveEvent<FId, K>) => void,
         ): () => void;
     };
-    createWindow: <K extends _SuggestWindowKeys>(name: K) => _ResolveWindow<K & string>;
-    getWindow: <K extends _SuggestWindowKeys>(name: K) => _ResolveWindow<K & string> | null;
+    getWindow: <K extends _SuggestWindowKeys>(id: K) => CreatedWindow<_ResolveWindowApi<K & string>> | null;
+    createView: <K extends _SuggestViewKeys>(id: K) => ElectroView;
+    getView: <K extends _SuggestViewKeys>(id: K) => ElectroView | null;
 };
 
 /** Unscoped context — flat suggestions from all features. */
@@ -198,8 +207,9 @@ export type BaseContext = {
         publish(event: _SuggestAllEvent, payload?: unknown): void;
         on(event: string, handler: (payload: unknown) => void): () => void;
     };
-    createWindow: <K extends _SuggestWindowKeys>(name: K) => _ResolveWindow<K & string>;
-    getWindow: <K extends _SuggestWindowKeys>(name: K) => _ResolveWindow<K & string> | null;
+    getWindow: <K extends _SuggestWindowKeys>(id: K) => CreatedWindow<_ResolveWindowApi<K & string>> | null;
+    createView: <K extends _SuggestViewKeys>(id: K) => ElectroView;
+    getView: <K extends _SuggestViewKeys>(id: K) => ElectroView | null;
 };
 
 // Logger contract
