@@ -44,7 +44,7 @@ export async function findElectronBin(root: string): Promise<string> {
 export interface ElectronLaunchOptions {
     /** Project root */
     root: string;
-    /** Path to the built main entry (e.g. .electro/main/index.mjs) */
+    /** Path to the built main entry (e.g. .electro/main/index.mjs or index.cjs) */
     entry: string;
     /** Environment variables to pass */
     env?: Record<string, string>;

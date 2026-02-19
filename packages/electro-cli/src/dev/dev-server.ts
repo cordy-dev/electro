@@ -27,6 +27,8 @@ import {
     step,
     stepFail,
 } from "./logger";
+import type { NodeOutputFormat } from "./node-format";
+import { resolveMainEntryPath, resolveNodeOutputFormat } from "./node-format";
 import { createNodeConfig } from "./vite-node-config";
 import { createRendererConfig } from "./vite-renderer-config";
 
@@ -63,6 +65,7 @@ export class DevServer {
     private mainWatch: { close(): void } | null = null;
     private preloadWatch: { close(): void } | null = null;
     private outputDir = "";
+    private nodeFormat: NodeOutputFormat = "es";
     private readonly logLevel?: "info" | "warn" | "error" | "silent";
     private readonly clearScreen?: boolean;
     private readonly rendererOnly: boolean;
@@ -105,6 +108,7 @@ export class DevServer {
         this.config = loaded.config;
         this.root = loaded.root;
         this.outputDir = this.outDirOverride ? resolve(this.root, this.outDirOverride) : resolve(this.root, ".electro");
+        this.nodeFormat = await resolveNodeOutputFormat(this.root);
 
         // Track config paths for watching
         this.configPaths.add(loaded.configPath);
@@ -319,6 +323,7 @@ export class DevServer {
             logLevel: this.logLevel,
             clearScreen: this.clearScreen,
             sourcemap: this.sourcemap,
+            format: this.nodeFormat,
         });
 
         if (Object.keys(input).length > 1) {
@@ -333,6 +338,7 @@ export class DevServer {
                 logLevel: this.logLevel,
                 clearScreen: this.clearScreen,
                 sourcemap: this.sourcemap,
+                format: this.nodeFormat,
             });
             (baseConfig.plugins as Plugin[]).push(isolateEntriesPlugin(subBuildConfig));
         }
@@ -394,6 +400,7 @@ export class DevServer {
             clearScreen: this.clearScreen,
             userViteConfig: this.config!.runtime.vite,
             sourcemap: this.sourcemap,
+            format: this.nodeFormat,
             define: {
                 __ELECTRO_VIEW_REGISTRY__: JSON.stringify(viewRegistry),
             },
@@ -438,7 +445,7 @@ export class DevServer {
     // ── Electron process management ─────────────────────────
 
     private async attachElectronProcess(): Promise<void> {
-        const mainEntry = resolve(this.outputDir, "main/index.mjs");
+        const mainEntry = await resolveMainEntryPath(resolve(this.outputDir, "main"));
         const env: Record<string, string> = {
             ELECTRO_DEV: "true",
         };

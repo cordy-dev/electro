@@ -1,6 +1,6 @@
 {
     "name": "@cordy/electro-generator",
-    "version": "1.2.6",
+    "version": "1.2.7",
     "description": "Code generator for @cordy/electro — scans features and emits preload scripts and bridge types",
     "license": "MIT",
     "type": "module",
@@ -44,7 +44,7 @@
         "prepublishOnly": "bun run build"
     },
     "peerDependencies": {
-        "@cordy/electro": "1.2.6"
+        "@cordy/electro": "1.2.7"
     },
     "dependencies": {
         "oxc-parser": "^0.114.0",

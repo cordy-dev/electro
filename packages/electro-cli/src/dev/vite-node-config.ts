@@ -2,6 +2,9 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import type { InlineConfig, Logger, Plugin, UserConfig } from "vite";
 import { mergeConfig } from "vite";
+import type { NodeOutputFormat } from "./node-format";
+import { esmShimPlugin } from "../plugins/esm-shim";
+import { importMetaPlugin } from "../plugins/import-meta";
 import { enforceMergedNodeConfig, validateMergedNodeConfig } from "../validate";
 
 export interface NodeConfigOptions {
@@ -31,6 +34,8 @@ export interface NodeConfigOptions {
     sourcemap?: string;
     /** Custom Vite logger (for build-mode output) */
     customLogger?: Logger;
+    /** Output module format for Node scopes */
+    format?: NodeOutputFormat;
 }
 
 function resolveSourcemap(mode?: string): boolean | "inline" | "hidden" {
@@ -41,14 +46,17 @@ function resolveSourcemap(mode?: string): boolean | "inline" | "hidden" {
 }
 
 export function createNodeConfig(opts: NodeConfigOptions): InlineConfig {
-    const resolveConditions = opts.scope === "preload" ? ["node", "import", "default"] : ["node", "import"];
-
+    const format = opts.format ?? "es";
+    const moduleCondition = format === "cjs" ? "require" : "import";
+    const resolveConditions =
+        opts.scope === "preload" ? ["node", moduleCondition, "default"] : ["node", moduleCondition];
     const envPrefix = opts.scope === "main" ? ["MAIN_VITE_", "VITE_"] : ["PRELOAD_VITE_", "VITE_"];
+    const entryExt = format === "cjs" ? "cjs" : "mjs";
 
     const config: InlineConfig = {
         configFile: false,
         root: opts.root,
-        plugins: opts.plugins ?? [],
+        plugins: [importMetaPlugin(), ...(opts.plugins ?? []), esmShimPlugin()],
         customLogger: opts.customLogger,
         envPrefix,
 
@@ -65,8 +73,8 @@ export function createNodeConfig(opts: NodeConfigOptions): InlineConfig {
             emptyOutDir: true,
             rolldownOptions: {
                 output: {
-                    format: "es",
-                    entryFileNames: "index.mjs",
+                    format,
+                    entryFileNames: `index.${entryExt}`,
                 },
                 external: opts.externals,
             },

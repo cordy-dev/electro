@@ -8,6 +8,8 @@ import { loadConfig } from "../dev/config-loader";
 import { resolveExternals } from "../dev/externals";
 import type { SessionMeta } from "../dev/logger";
 import { buildScope, createBuildLogger, footer, session, setLogLevel, startTimer, step, stepFail } from "../dev/logger";
+import type { NodeOutputFormat } from "../dev/node-format";
+import { resolveNodeOutputFormat } from "../dev/node-format";
 import { createNodeConfig } from "../dev/vite-node-config";
 import { createRendererConfig } from "../dev/vite-renderer-config";
 import { assetPlugin } from "../plugins/asset";
@@ -46,6 +48,7 @@ export async function build(options: BuildOptions): Promise<void> {
     const root = loaded.root;
     const outDir = resolve(root, options.outDir);
     const codegenDir = resolve(root, ".electro");
+    const nodeFormat = await resolveNodeOutputFormat(root);
 
     // 3. Print session banner
     const views = config.views ?? [];
@@ -112,6 +115,7 @@ export async function build(options: BuildOptions): Promise<void> {
             sourcemap: options.sourcemap,
             logger,
             bytecode: options.bytecode,
+            format: nodeFormat,
         });
     } catch (err) {
         stepFail("main", err instanceof Error ? err.message : String(err));
@@ -131,6 +135,7 @@ export async function build(options: BuildOptions): Promise<void> {
                 sourcemap: options.sourcemap,
                 logger,
                 bytecode: options.bytecode,
+                format: nodeFormat,
             });
         } catch (err) {
             stepFail("preload", err instanceof Error ? err.message : String(err));
@@ -180,6 +185,7 @@ interface MainBuildArgs {
     sourcemap?: string;
     logger: import("vite").Logger;
     bytecode?: boolean;
+    format: NodeOutputFormat;
 }
 
 async function buildMain(args: MainBuildArgs): Promise<void> {
@@ -206,6 +212,7 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
         sourcemap: args.sourcemap,
         customLogger: args.logger,
         logLevel: "info",
+        format: args.format,
         define: {
             __ELECTRO_VIEW_REGISTRY__: JSON.stringify(viewRegistry),
         },
@@ -223,6 +230,7 @@ interface PreloadBuildArgs {
     sourcemap?: string;
     logger: import("vite").Logger;
     bytecode?: boolean;
+    format: NodeOutputFormat;
 }
 
 async function buildPreload(args: PreloadBuildArgs): Promise<void> {
@@ -254,6 +262,7 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
         sourcemap: args.sourcemap,
         customLogger: args.logger,
         logLevel: "info",
+        format: args.format,
     });
 
     if (Object.keys(input).length > 1) {
@@ -268,6 +277,7 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
             sourcemap: args.sourcemap,
             customLogger: args.logger,
             logLevel: "info",
+            format: args.format,
         });
         (baseConfig.plugins as Plugin[]).push(isolateEntriesPlugin(subBuildConfig));
     }

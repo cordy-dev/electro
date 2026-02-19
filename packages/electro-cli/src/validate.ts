@@ -94,10 +94,11 @@ export function validateMergedNodeConfig(
         const output = (rolldownOpts as Record<string, unknown>).output;
         if (output && typeof output === "object" && !Array.isArray(output)) {
             const fmt = (output as Record<string, unknown>).format;
-            if (fmt && fmt !== "es") {
+            if (fmt && fmt !== "es" && fmt !== "cjs") {
                 throw new Error(
-                    `[electro] ${scope}: invalid output format "${fmt}". Electro is ESM-only (format: "es"). ` +
-                        "Remove the format override from your config.",
+                    `[electro] ${scope}: invalid output format "${fmt}". ` +
+                        `Electro supports "es" and "cjs" for Node scopes. ` +
+                        "Update build.rolldownOptions.output.format in your config.",
                 );
             }
         }
@@ -124,15 +125,6 @@ export function enforceMergedNodeConfig(config: Record<string, unknown>, _scope:
     // Enforce target: "esnext"
     if (build.target !== "esnext") {
         build.target = "esnext";
-    }
-
-    // Enforce format: "es" in rolldownOptions.output
-    const rolldownOpts = build.rolldownOptions as Record<string, unknown> | undefined;
-    if (rolldownOpts) {
-        const output = rolldownOpts.output as Record<string, unknown> | undefined;
-        if (output && output.format !== "es") {
-            output.format = "es";
-        }
     }
 
     // Enforce SSR is enabled

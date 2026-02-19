@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { launchElectron } from "../dev/electron-launcher";
 import { footer, note, runtimeLog, setLogLevel, startTimer, step, stepFail } from "../dev/logger";
+import { resolveMainEntryPath } from "../dev/node-format";
 import { validateSourcemap } from "../validate";
 import { build } from "./build";
 
@@ -34,7 +35,7 @@ export async function preview(options: PreviewOptions): Promise<void> {
     // 2. Launch Electron with the built output
     const root = process.cwd();
     const outDir = resolve(root, options.outDir);
-    const mainEntry = resolve(outDir, "main/index.mjs");
+    const mainEntry = await resolveMainEntryPath(resolve(outDir, "main"));
 
     const launchTimer = startTimer();
     try {
