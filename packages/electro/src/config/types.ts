@@ -1,4 +1,5 @@
 import type { UserConfig as ViteUserConfig } from "vite";
+import type { FeatureMap } from "../core/types";
 
 // ── Brand symbols (type-level only) ────────────────────────────────
 
@@ -41,10 +42,13 @@ export interface DefineRuntimeInput {
     vite?: ViteUserConfig;
 }
 
+/** Suggests known feature IDs from FeatureMap while still allowing arbitrary strings. */
+type SuggestFeatureId = (keyof FeatureMap & string) | (string & {});
+
 export interface DefineViewInput {
     name: string;
     entry: string;
-    features?: readonly string[];
+    features?: readonly SuggestFeatureId[];
     vite?: ViteUserConfig;
     preload?: string;
     webPreferences?: Record<string, unknown>;
