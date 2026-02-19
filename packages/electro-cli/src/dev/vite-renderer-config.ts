@@ -37,7 +37,7 @@ export function createRendererConfig(opts: RendererConfigOptions): InlineConfig 
     const input: Record<string, string> = {};
     for (const view of opts.views) {
         const sourceDir = dirname(view.__source);
-        input[view.name] = resolve(sourceDir, view.entry);
+        input[view.name] = resolve(sourceDir, view.entry!);
     }
 
     const isBuild = !!opts.outDir;

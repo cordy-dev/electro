@@ -7,10 +7,13 @@ import type { WindowConfig, WindowId } from "./types";
  * `create()` is idempotent: calling it while an alive window exists returns
  * the existing instance. After the window is destroyed (user close, etc.),
  * calling `create()` again spawns a fresh one.
+ *
+ * API methods from `config.api()` are mixed directly onto the instance
+ * via Object.assign, so callers can do `window.show()` instead of `window.api?.show()`.
  */
 export class Window<TApi = void> {
     private _window: BaseWindow | null = null;
-    private _api: TApi | null = null;
+    private _apiKeys: string[] | null = null;
 
     constructor(private readonly config: WindowConfig<TApi>) {}
 
@@ -30,7 +33,9 @@ export class Window<TApi = void> {
         });
 
         if (this.config.api) {
-            this._api = this.config.api(this._window);
+            const api = this.config.api(this._window);
+            this._apiKeys = Object.keys(api as object);
+            Object.assign(this, api);
         }
 
         return this._window;
@@ -39,17 +44,9 @@ export class Window<TApi = void> {
     get window(): BaseWindow | null {
         if (this._window?.isDestroyed()) {
             this._window = null;
-            this._api = null;
+            this.clearApi();
         }
         return this._window;
-    }
-
-    get api(): TApi | null {
-        if (this._window?.isDestroyed()) {
-            this._window = null;
-            this._api = null;
-        }
-        return this._api;
     }
 
     destroy(): void {
@@ -57,6 +54,15 @@ export class Window<TApi = void> {
             this._window.destroy();
         }
         this._window = null;
-        this._api = null;
+        this.clearApi();
+    }
+
+    private clearApi(): void {
+        if (this._apiKeys) {
+            for (const key of this._apiKeys) {
+                delete (this as Record<string, unknown>)[key];
+            }
+            this._apiKeys = null;
+        }
     }
 }

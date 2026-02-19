@@ -20,7 +20,7 @@ export interface RuntimeDefinition {
 export interface ViewDefinition {
     readonly [VIEW_BRAND]: true;
     readonly name: string;
-    readonly entry: string;
+    readonly entry?: string;
     readonly features?: readonly string[];
     readonly vite?: ViteUserConfig;
     readonly preload?: string;
@@ -47,7 +47,7 @@ type SuggestFeatureId = (keyof FeatureMap & string) | (string & {});
 
 export interface DefineViewInput {
     name: string;
-    entry: string;
+    entry?: string;
     features?: readonly SuggestFeatureId[];
     vite?: ViteUserConfig;
     preload?: string;

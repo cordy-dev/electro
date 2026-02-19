@@ -6,9 +6,13 @@ import { createConsoleHandler } from "../logger/console-handler";
 import { Logger } from "../logger/logger";
 import { StateMachine } from "../state-machine/state-machine";
 import { ViewManager } from "../view/manager";
+import type { ViewRegistryEntry } from "../view/types";
+import { View } from "../view/view";
 import { WindowManager } from "../window/manager";
 import { RuntimeState } from "./enums";
 import type { RuntimeConfig } from "./types";
+
+declare const __ELECTRO_VIEW_REGISTRY__: ViewRegistryEntry[] | undefined;
 
 const RUNTIME_TRANSITIONS: Record<RuntimeState, RuntimeState[]> = {
     [RuntimeState.CREATED]: [RuntimeState.STARTING],
@@ -54,10 +58,12 @@ export class Runtime {
             this.windowManager.register(win);
         }
 
-        // Register views
+        // Register views from CLI-injected registry
         this.viewManager = new ViewManager();
-        for (const view of config?.views ?? []) {
-            this.viewManager.register(view);
+        const viewRegistry: ViewRegistryEntry[] =
+            typeof __ELECTRO_VIEW_REGISTRY__ !== "undefined" ? __ELECTRO_VIEW_REGISTRY__ : [];
+        for (const entry of viewRegistry) {
+            this.viewManager.register(new View(entry));
         }
 
         // Pass managers to feature manager

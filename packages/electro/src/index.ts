@@ -57,8 +57,7 @@ export type {
 export { createWindow } from "./core/window/helpers";
 export type { CreatedWindow, WindowConfig, WindowId, WindowInstance } from "./core/window/types";
 // ── View (runtime) ──────────────────────────────────────────────────
-export { createView } from "./core/view/helpers";
-export type { CreatedView, ElectroView, ViewConfig, ViewId, ViewInstance } from "./core/view/types";
+export type { ElectroView, ViewId, ViewInstance, ViewRegistryEntry } from "./core/view/types";
 // ── Policy ──────────────────────────────────────────────────────────
 export { PolicyEngine } from "./policy/engine";
 export type { PolicyResult } from "./policy/types";

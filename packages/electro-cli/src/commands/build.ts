@@ -49,6 +49,7 @@ export async function build(options: BuildOptions): Promise<void> {
 
     // 3. Print session banner
     const views = config.views ?? [];
+    const rendererViews = views.filter((v) => v.entry);
     const srcDir = resolve(root, "src");
     const mainSourceDir = dirname(config.runtime.__source);
     const mainEntry = resolve(mainSourceDir, config.runtime.entry);
@@ -56,12 +57,12 @@ export async function build(options: BuildOptions): Promise<void> {
     const sessionMeta: SessionMeta = {
         root,
         main: mainEntry,
-        preload: views.length > 0 ? resolve(codegenDir, "generated/preload") : null,
-        renderer: views.length > 0 ? resolve(root, dirname(relative(root, views[0].__source))) : null,
+        preload: rendererViews.length > 0 ? resolve(codegenDir, "generated/preload") : null,
+        renderer: rendererViews.length > 0 ? resolve(root, dirname(relative(root, rendererViews[0].__source))) : null,
         mode: "build",
-        windows: views.map((w) => ({
+        windows: rendererViews.map((w) => ({
             name: w.name,
-            entry: resolve(dirname(w.__source), w.entry),
+            entry: resolve(dirname(w.__source), w.entry!),
         })),
     };
     session(sessionMeta);
@@ -118,7 +119,7 @@ export async function build(options: BuildOptions): Promise<void> {
     }
 
     // 7. Build preload
-    if (views.length > 0) {
+    if (rendererViews.length > 0) {
         try {
             buildScope("preload");
             await buildPreload({
@@ -138,15 +139,15 @@ export async function build(options: BuildOptions): Promise<void> {
     }
 
     // 8. Build renderer
-    if (views.length > 0) {
+    if (rendererViews.length > 0) {
         try {
             buildScope("renderer");
 
-            const userViteConfigs = views.filter((w) => w.vite).map((w) => w.vite!);
+            const userViteConfigs = rendererViews.filter((w) => w.vite).map((w) => w.vite!);
 
             const rendererConfig = createRendererConfig({
                 root,
-                views,
+                views: rendererViews,
                 userViteConfigs: userViteConfigs.length > 0 ? userViteConfigs : undefined,
                 logLevel: "info",
                 customLogger: logger,
@@ -158,7 +159,7 @@ export async function build(options: BuildOptions): Promise<void> {
             await viteBuild(rendererConfig);
 
             // Flatten output: src/views/main/index.html → main/index.html
-            await flattenRendererOutput(resolve(outDir, "renderer"), views, root);
+            await flattenRendererOutput(resolve(outDir, "renderer"), rendererViews, root);
         } catch (err) {
             stepFail("renderer", err instanceof Error ? err.message : String(err));
             process.exit(1);
@@ -186,6 +187,12 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
     const sourceDir = dirname(args.config.runtime.__source);
     const entry = resolve(sourceDir, runtimeEntry);
 
+    const viewRegistry = (args.config.views ?? []).map((v) => ({
+        id: v.name,
+        hasRenderer: !!v.entry,
+        webPreferences: v.webPreferences ?? {},
+    }));
+
     const mainConfig = createNodeConfig({
         scope: "main",
         root: args.root,
@@ -198,6 +205,9 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
         sourcemap: args.sourcemap,
         customLogger: args.logger,
         logLevel: "info",
+        define: {
+            __ELECTRO_VIEW_REGISTRY__: JSON.stringify(viewRegistry),
+        },
     });
 
     await viteBuild(mainConfig);
@@ -215,7 +225,7 @@ interface PreloadBuildArgs {
 }
 
 async function buildPreload(args: PreloadBuildArgs): Promise<void> {
-    const views = args.config.views ?? [];
+    const views = (args.config.views ?? []).filter((v) => v.entry);
 
     const input: Record<string, string> = {};
     for (const view of views) {

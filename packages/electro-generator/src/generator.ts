@@ -160,7 +160,7 @@ export {};
 type _SvcApi<T> = T extends { api(): infer R } ? NonNullable<R> : never;
 type _TaskPayload<T> = T extends { start(payload?: infer P): any } ? P : void;
 type _EventPayload<T> = T extends { payload(): infer P } ? P : unknown;
-type _WinApi<T> = T extends import("@cordy/electro").CreatedWindow<infer A> ? A : void;
+type _WinApi<T> = T extends { __apiType?: infer A } ? NonNullable<A> : void;
 `;
 
 /**

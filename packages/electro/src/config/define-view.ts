@@ -14,10 +14,6 @@ export function defineView(input: DefineViewInput): ViewDefinition {
         );
     }
 
-    if (!input.entry || input.entry.trim().length === 0) {
-        throw new Error("[electro] defineView: entry must be a non-empty string");
-    }
-
     return {
         name: input.name,
         entry: input.entry,

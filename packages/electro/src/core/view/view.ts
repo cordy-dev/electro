@@ -1,13 +1,5 @@
 import { join } from "node:path";
-import type { ElectroView, RendererViewConfig, ViewConfig, ViewId } from "./types";
-
-function isRendererConfig(config: ViewConfig): config is RendererViewConfig {
-    return "renderer" in config;
-}
-
-function resolveRendererName(config: RendererViewConfig): string {
-    return config.renderer === true ? config.id : config.renderer;
-}
+import type { ElectroView, ViewId, ViewRegistryEntry } from "./types";
 
 /**
  * View — manages a single WebContentsView instance.
@@ -22,10 +14,10 @@ function resolveRendererName(config: RendererViewConfig): string {
 export class View {
     private _view: ElectroView | null = null;
 
-    constructor(private readonly config: ViewConfig) {}
+    constructor(private readonly entry: ViewRegistryEntry) {}
 
     get id(): ViewId {
-        return this.config.id;
+        return this.entry.id;
     }
 
     create(): ElectroView {
@@ -35,23 +27,22 @@ export class View {
 
         const { WebContentsView: WCV } = require("electron") as typeof import("electron");
         const webPreferences: Record<string, unknown> = {
-            ...(this.config.webPreferences ?? {}),
+            ...(this.entry.webPreferences ?? {}),
         };
 
         const view = new WCV({ webPreferences }) as ElectroView;
 
-        // Augment load()
-        if (isRendererConfig(this.config)) {
-            const rendererName = resolveRendererName(this.config);
+        if (this.entry.hasRenderer) {
+            const viewId = this.entry.id;
             view.load = async () => {
-                const devUrl = process.env[`ELECTRO_DEV_URL_${rendererName}`];
+                const devUrl = process.env[`ELECTRO_DEV_URL_${viewId}`];
                 if (devUrl) {
                     await view.webContents.loadURL(devUrl);
                     return;
                 }
                 const { app } = await import("electron");
                 await view.webContents.loadFile(
-                    join(app.getAppPath(), ".electro", "out", "renderer", rendererName, "index.html"),
+                    join(app.getAppPath(), ".electro", "out", "renderer", viewId, "index.html"),
                 );
             };
         } else {

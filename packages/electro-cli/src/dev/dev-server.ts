@@ -114,6 +114,7 @@ export class DevServer {
 
         // Print session banner
         const views = this.config.views ?? [];
+        const rendererViews = views.filter((v) => v.entry);
         const srcDir = resolve(this.root, "src");
 
         const mainSourceDir = dirname(this.config.runtime.__source);
@@ -122,11 +123,14 @@ export class DevServer {
         const sessionMeta: SessionMeta = {
             root: this.root,
             main: mainEntry,
-            preload: views.length > 0 ? resolve(this.outputDir, "generated/preload") : null,
-            renderer: views.length > 0 ? resolve(this.root, dirname(relative(this.root, views[0].__source))) : null,
-            windows: views.map((w) => ({
+            preload: rendererViews.length > 0 ? resolve(this.outputDir, "generated/preload") : null,
+            renderer:
+                rendererViews.length > 0
+                    ? resolve(this.root, dirname(relative(this.root, rendererViews[0].__source)))
+                    : null,
+            windows: rendererViews.map((w) => ({
                 name: w.name,
-                entry: resolve(dirname(w.__source), w.entry),
+                entry: resolve(dirname(w.__source), w.entry!),
             })),
         };
         session(sessionMeta);
@@ -274,7 +278,7 @@ export class DevServer {
     }
 
     private async startRenderer(): Promise<void> {
-        const views = this.config!.views ?? [];
+        const views = (this.config!.views ?? []).filter((v) => v.entry);
         const userViteConfigs = views.filter((w) => w.vite).map((w) => w.vite!);
 
         const rendererConfig = createRendererConfig({
@@ -294,7 +298,7 @@ export class DevServer {
     }
 
     private async buildPreload(externals: (string | RegExp)[]): Promise<void> {
-        const views = this.config!.views ?? [];
+        const views = (this.config!.views ?? []).filter((v) => v.entry);
         const preloadOutDir = resolve(this.outputDir, "preload");
 
         const input: Record<string, string> = {};
@@ -371,6 +375,12 @@ export class DevServer {
         const sourceDir = dirname(this.config!.runtime.__source);
         const entry = resolve(sourceDir, runtimeEntry);
 
+        const viewRegistry = (this.config!.views ?? []).map((v) => ({
+            id: v.name,
+            hasRenderer: !!v.entry,
+            webPreferences: v.webPreferences ?? {},
+        }));
+
         const mainConfig = createNodeConfig({
             scope: "main",
             root: this.root,
@@ -383,6 +393,9 @@ export class DevServer {
             clearScreen: this.clearScreen,
             userViteConfig: this.config!.runtime.vite,
             sourcemap: this.sourcemap,
+            define: {
+                __ELECTRO_VIEW_REGISTRY__: JSON.stringify(viewRegistry),
+            },
         });
 
         const self = this;
@@ -435,6 +448,7 @@ export class DevServer {
             env.ELECTRO_RENDERER_BASE = `http://localhost:${port}`;
 
             for (const view of this.config!.views ?? []) {
+                if (!view.entry) continue;
                 const viewSourceDir = dirname(view.__source);
                 const entryPath = resolve(viewSourceDir, view.entry);
                 const relPath = relative(this.root, entryPath);
