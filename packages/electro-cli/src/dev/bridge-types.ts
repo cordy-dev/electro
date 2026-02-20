@@ -3,7 +3,7 @@ import type { ViewDefinition } from "@cordy/electro";
 import type { GeneratedFile } from "@cordy/electro-generator";
 
 const GENERATED_BRIDGE_DIRS = ["views", "windows"] as const;
-const VIEW_BRIDGE_MODULE_FILE = "bridge.ts";
+const VIEW_BRIDGE_MODULE_FILE = "bridge.gen.ts";
 
 /**
  * Resolve generated bridge declaration file for a view.

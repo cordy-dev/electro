@@ -107,8 +107,9 @@ contextBridge.exposeInMainWorld("electro", ${bridgeObject});
  * Generate bridge type declarations for a specific view.
  * Makes `window.electro` type-safe in the renderer.
  */
-function generateBridgeTypes(viewName: string, features: ScannedFeature[], policy: PolicyEngine): GeneratedFile {
-    const allowedFeatures = features.filter((f) => policy.canAccess(viewName, f.id));
+function generateBridgeTypes(view: ViewDefinition, features: ScannedFeature[], policy: PolicyEngine): GeneratedFile {
+    const allowedFeatures = features.filter((f) => policy.canAccess(view.name, f.id));
+    const bridgeModulePath = join(dirname(view.__source), "bridge.gen.ts");
 
     const featureTypes: string[] = [];
 
@@ -121,43 +122,62 @@ function generateBridgeTypes(viewName: string, features: ScannedFeature[], polic
 
         const serviceTypes: string[] = [];
         for (const service of exposedServices) {
-            if (service.methods.length === 0) {
-                serviceTypes.push(`            ${q(service.id)}: Record<string, never>;`);
-                continue;
+            if (service.exported) {
+                const importPath = toImportPathFrom(bridgeModulePath, service.filePath);
+                serviceTypes.push(
+                    `            ${q(service.id)}: _SvcApi<typeof import("${importPath}").${service.varName}>;`,
+                );
+            } else {
+                serviceTypes.push(`            ${q(service.id)}: unknown;`);
             }
-            const methodTypes = service.methods
-                .map((m) => `                ${q(m)}(...args: unknown[]): Promise<unknown>;`)
-                .join("\n");
-            serviceTypes.push(`            ${q(service.id)}: {\n${methodTypes}\n            };`);
         }
 
         featureTypes.push(`        ${q(feature.id)}: {\n${serviceTypes.join("\n")}\n        };`);
     }
 
-    // Collect event keys from allowed features
-    const eventKeys: string[] = [];
+    // Collect event keys + payload types from allowed features
+    const eventTypeEntries: string[] = [];
     for (const feature of allowedFeatures) {
         for (const evt of feature.events ?? []) {
-            eventKeys.push(`"${feature.id}:${evt.id}"`);
+            const eventKey = `${feature.id}:${evt.id}`;
+            if (evt.exported) {
+                const importPath = toImportPathFrom(bridgeModulePath, evt.filePath);
+                eventTypeEntries.push(
+                    `    ${JSON.stringify(eventKey)}: _EventPayload<typeof import("${importPath}").${evt.varName}>;`,
+                );
+            } else {
+                eventTypeEntries.push(`    ${JSON.stringify(eventKey)}: unknown;`);
+            }
         }
     }
 
     // Add events type if view has allowed features
+    const eventMapTypes =
+        eventTypeEntries.length > 0 ? `\ntype ElectroEventMap = {\n${eventTypeEntries.join("\n")}\n};` : "";
+
     if (allowedFeatures.length > 0) {
-        const channelType = eventKeys.length > 0 ? eventKeys.join(" | ") : "string";
-        featureTypes.push(
-            `        events: {\n            on(channel: ${channelType} | (string & {}), handler: (payload: unknown) => void): () => void;\n        };`,
-        );
+        if (eventTypeEntries.length > 0) {
+            featureTypes.push(
+                `        events: {\n            on<K extends keyof ElectroEventMap>(channel: K, handler: (payload: ElectroEventMap[K]) => void): () => void;\n            on(channel: string & {}, handler: (payload: unknown) => void): () => void;\n        };`,
+            );
+        } else {
+            featureTypes.push(
+                `        events: {\n            on(channel: string & {}, handler: (payload: unknown) => void): () => void;\n        };`,
+            );
+        }
     }
 
     const interfaceBody = featureTypes.length > 0 ? `{\n${featureTypes.join("\n")}\n    }` : "{}";
 
     const content = `${HEADER}
+type _SvcApi<T> = T extends { api(): infer R } ? NonNullable<R> : never;
+type _EventPayload<T> = T extends { payload(): infer P } ? P : unknown;${eventMapTypes}
+
 export interface ElectroBridge ${interfaceBody}
 `;
 
     return {
-        path: `generated/views/${viewName}.bridge.d.ts`,
+        path: `generated/views/${view.name}.bridge.d.ts`,
         content,
     };
 }
@@ -165,11 +185,19 @@ export interface ElectroBridge ${interfaceBody}
 // ── Feature types generator ─────────────────────────────────────────
 
 /** Calculate the import path from the generated env types file to a source file. */
+function toImportPathFrom(outputFilePath: string, sourceFilePath: string): string {
+    const rel = relative(dirname(outputFilePath), sourceFilePath);
+    // Remove .ts extension, ensure starts with . or ..
+    const importPath = rel.replace(/\.(?:[cm]?tsx?|[cm]?jsx?)$/, "");
+    return importPath.startsWith(".") ? importPath : `./${importPath}`;
+}
+
+/** Calculate the import path from the generated env types file to a source file. */
 function toImportPath(envTypesDir: string, sourceFilePath: string): string {
     const outputFile = join(envTypesDir, "electro-env.d.ts");
     const rel = relative(dirname(outputFile), sourceFilePath);
     // Remove .ts extension, ensure starts with . or ..
-    const importPath = rel.replace(/\.ts$/, "");
+    const importPath = rel.replace(/\.(?:[cm]?tsx?|[cm]?jsx?)$/, "");
     return importPath.startsWith(".") ? importPath : `./${importPath}`;
 }
 
@@ -375,7 +403,7 @@ export function generate(input: GeneratorInput): GeneratorOutput {
         }
 
         files.push(generatePreload(view.name, scanResult.features, policy, view.preload));
-        files.push(generateBridgeTypes(view.name, scanResult.features, policy));
+        files.push(generateBridgeTypes(view, scanResult.features, policy));
     }
 
     const envTypes = generateFeatureTypes(scanResult.features, srcDir, views, scanResult.windows ?? []);

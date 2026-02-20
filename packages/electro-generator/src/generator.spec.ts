@@ -97,7 +97,8 @@ function makeScanResult(overrides?: Partial<ScanResult>): ScanResult {
 }
 
 function makeView(name: string, features: string[]) {
-    return defineView({ name, entry: `./src/${name}.html`, features });
+    const view = defineView({ name, entry: `./src/${name}.html`, features });
+    return { ...view, __source: `/project/src/renderer/views/${name}/view.config.ts` } as typeof view;
 }
 
 const defaultInput = (overrides?: Partial<Parameters<typeof generate>[0]>) => ({
@@ -160,10 +161,10 @@ describe("generate()", () => {
 
         const bridge = files.find((f) => f.path === "generated/views/main.bridge.d.ts")!;
         expect(bridge.content).toContain("interface ElectroBridge");
-        expect(bridge.content).not.toContain("interface Window");
-        expect(bridge.content).not.toContain("electro: ElectroBridge");
-        expect(bridge.content).toContain("create(...args: unknown[]): Promise<unknown>");
-        expect(bridge.content).toContain("refund(...args: unknown[]): Promise<unknown>");
+        expect(bridge.content).toContain('payment: _SvcApi<typeof import("');
+        expect(bridge.content).toContain("paymentService");
+        expect(bridge.content).toContain("on<K extends keyof ElectroEventMap>");
+        expect(bridge.content).toContain('"billing:payment-created"');
     });
 
     it("generates FeatureMap with per-feature services", () => {
@@ -402,7 +403,8 @@ describe("generate()", () => {
         expect(preload.content).toContain("stub: {},");
 
         const bridge = files.find((f) => f.path === "generated/views/main.bridge.d.ts")!;
-        expect(bridge.content).toContain("stub: Record<string, never>");
+        expect(bridge.content).toContain("stub: _SvcApi<typeof import(");
+        expect(bridge.content).toContain("stubService");
     });
 
     it("handles view with no features property", () => {
