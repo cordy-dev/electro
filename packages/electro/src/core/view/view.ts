@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { ElectroView, ViewId, ViewRegistryEntry } from "./types";
 
@@ -29,6 +30,13 @@ export class View {
         const webPreferences: Record<string, unknown> = {
             ...(this.entry.webPreferences ?? {}),
         };
+
+        if (this.entry.hasRenderer && typeof webPreferences.preload !== "string") {
+            const preloadPath = resolveDefaultPreloadPath(this.entry.id);
+            if (preloadPath) {
+                webPreferences.preload = preloadPath;
+            }
+        }
 
         const view = new WCV({ webPreferences }) as ElectroView;
 
@@ -68,4 +76,22 @@ export class View {
         }
         this._view = null;
     }
+}
+
+const PRELOAD_EXTENSIONS = ["mjs", "cjs", "js"] as const;
+
+function resolveDefaultPreloadPath(viewId: string): string | null {
+    const preloadDir = join(import.meta.dirname, "..", "preload");
+
+    for (const ext of PRELOAD_EXTENSIONS) {
+        const byViewId = join(preloadDir, `${viewId}.${ext}`);
+        if (existsSync(byViewId)) return byViewId;
+    }
+
+    for (const ext of PRELOAD_EXTENSIONS) {
+        const singleEntryFallback = join(preloadDir, `index.${ext}`);
+        if (existsSync(singleEntryFallback)) return singleEntryFallback;
+    }
+
+    return null;
 }

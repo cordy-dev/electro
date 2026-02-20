@@ -239,7 +239,7 @@ async function buildMain(args: MainBuildArgs): Promise<void> {
         id: v.name,
         hasRenderer: !!v.entry,
         features: v.features ?? [],
-        webPreferences: v.webPreferences ?? {},
+        webPreferences: sanitizeRuntimeWebPreferences(v.webPreferences),
     }));
 
     const mainConfig = createNodeConfig({
@@ -336,6 +336,12 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
     }
 
     await viteBuild(baseConfig);
+}
+
+function sanitizeRuntimeWebPreferences(webPreferences: Record<string, unknown> | undefined): Record<string, unknown> {
+    const prefs = { ...(webPreferences ?? {}) };
+    delete prefs.preload;
+    return prefs;
 }
 
 // ── Renderer output flattening ──────────────────────────────────────

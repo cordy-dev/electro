@@ -353,6 +353,39 @@ describe("generate()", () => {
         expect(preload.content).toContain('import "./extend.ts"');
     });
 
+    it("includes webPreferences.preload import without overriding generated preload", () => {
+        const v = defineView({
+            name: "main",
+            entry: "./src/main.html",
+            features: ["billing"],
+            webPreferences: {
+                preload: "./legacy-preload.ts",
+            },
+        });
+
+        const { files } = generate(defaultInput({ views: [v] }));
+        const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
+        expect(preload.content).toContain('import "./legacy-preload.ts"');
+        expect(preload.content).toContain('contextBridge.exposeInMainWorld("electro"');
+    });
+
+    it("includes both preload and webPreferences.preload imports", () => {
+        const v = defineView({
+            name: "main",
+            entry: "./src/main.html",
+            features: ["billing"],
+            preload: "./extend.ts",
+            webPreferences: {
+                preload: "./legacy-preload.ts",
+            },
+        });
+
+        const { files } = generate(defaultInput({ views: [v] }));
+        const preload = files.find((f) => f.path === "generated/preload/main.gen.ts")!;
+        expect(preload.content).toContain('import "./extend.ts"');
+        expect(preload.content).toContain('import "./legacy-preload.ts"');
+    });
+
     it("handles empty features list", () => {
         const { files } = generate(
             defaultInput({ scanResult: { features: [], windows: [] }, views: [makeView("main", [])] }),

@@ -40,7 +40,7 @@ function generatePreload(
     viewName: string,
     features: ScannedFeature[],
     policy: PolicyEngine,
-    preloadExtension?: string,
+    preloadExtensions: readonly string[] = [],
 ): GeneratedFile {
     const allowedFeatures = features.filter((f) => policy.canAccess(viewName, f.id));
 
@@ -90,9 +90,12 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("electro", ${bridgeObject});
 `;
 
-    // Append user extension import if specified
-    if (preloadExtension) {
-        content += `\n// User extension\nimport "${preloadExtension}";\n`;
+    // Append user extension imports if specified
+    if (preloadExtensions.length > 0) {
+        content += `\n// User extensions\n`;
+        for (const extension of preloadExtensions) {
+            content += `import "${extension}";\n`;
+        }
     }
 
     return {
@@ -402,7 +405,17 @@ export function generate(input: GeneratorInput): GeneratorOutput {
             }
         }
 
-        files.push(generatePreload(view.name, scanResult.features, policy, view.preload));
+        const preloadExtensions = new Set<string>();
+        if (typeof view.preload === "string" && view.preload.length > 0) {
+            preloadExtensions.add(view.preload);
+        }
+
+        const webPreferencesPreload = (view.webPreferences as Record<string, unknown> | undefined)?.preload;
+        if (typeof webPreferencesPreload === "string" && webPreferencesPreload.length > 0) {
+            preloadExtensions.add(webPreferencesPreload);
+        }
+
+        files.push(generatePreload(view.name, scanResult.features, policy, [...preloadExtensions]));
         files.push(generateBridgeTypes(view, scanResult.features, policy));
     }
 

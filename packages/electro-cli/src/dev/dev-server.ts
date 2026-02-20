@@ -78,6 +78,8 @@ export class DevServer {
     private nodeFormat: NodeOutputFormat = "es";
     private mainInitialBuildPromise: Promise<void> | null = null;
     private resolveMainInitialBuild: (() => void) | null = null;
+    private preloadInitialBuildPromise: Promise<void> | null = null;
+    private resolvePreloadInitialBuild: (() => void) | null = null;
     private readonly logLevel?: "info" | "warn" | "error" | "silent";
     private readonly clearScreen?: boolean;
     private readonly rendererOnly: boolean;
@@ -211,6 +213,7 @@ export class DevServer {
         // 7. Launch Electron
         const electronTimer = startTimer();
         try {
+            await this.waitForPreloadInitialBuild();
             await this.waitForMainInitialBuild();
             await this.attachElectronProcess();
             step("electron", electronTimer());
@@ -254,6 +257,8 @@ export class DevServer {
         this.preloadWatch = null;
         this.resolveMainInitialBuild = null;
         this.mainInitialBuildPromise = null;
+        this.resolvePreloadInitialBuild = null;
+        this.preloadInitialBuildPromise = null;
 
         if (this.mainRestartFlushTimer) {
             clearTimeout(this.mainRestartFlushTimer);
@@ -340,6 +345,12 @@ export class DevServer {
     private async buildPreload(externals: (string | RegExp)[], cjsInteropDeps: string[]): Promise<void> {
         const views = (this.config!.views ?? []).filter((v) => v.entry);
         const preloadOutDir = resolve(this.outputDir, "preload");
+        this.preloadInitialBuildPromise = new Promise<void>((resolve) => {
+            this.resolvePreloadInitialBuild = () => {
+                resolve();
+                this.resolvePreloadInitialBuild = null;
+            };
+        });
 
         const input: Record<string, string> = {};
         for (const view of views) {
@@ -402,6 +413,7 @@ export class DevServer {
             closeBundle() {
                 if (firstBuild) {
                     firstBuild = false;
+                    self.resolvePreloadInitialBuild?.();
                     return;
                 }
                 if (self.rendererServer) {
@@ -429,7 +441,7 @@ export class DevServer {
             id: v.name,
             hasRenderer: !!v.entry,
             features: v.features ?? [],
-            webPreferences: v.webPreferences ?? {},
+            webPreferences: sanitizeRuntimeWebPreferences(v.webPreferences),
         }));
 
         const mainConfig = createNodeConfig({
@@ -503,6 +515,22 @@ export class DevServer {
 
         const promise = this.mainInitialBuildPromise;
         this.mainInitialBuildPromise = null;
+        await Promise.race([promise, timeout]);
+    }
+
+    /**
+     * Wait until the initial preload watch build has completed.
+     * Prevents launching Electron before `window.electro` bridge is injected.
+     */
+    private async waitForPreloadInitialBuild(): Promise<void> {
+        if (!this.preloadInitialBuildPromise) return;
+
+        const timeout = sleep(MAIN_ENTRY_WAIT_TIMEOUT_MS).then(() => {
+            throw new Error(`Preload initial build did not finish in ${MAIN_ENTRY_WAIT_TIMEOUT_MS}ms.`);
+        });
+
+        const promise = this.preloadInitialBuildPromise;
+        this.preloadInitialBuildPromise = null;
         await Promise.race([promise, timeout]);
     }
 
@@ -686,4 +714,10 @@ async function writeFileIfChanged(filePath: string, content: string): Promise<vo
     }
 
     await writeFile(filePath, content);
+}
+
+function sanitizeRuntimeWebPreferences(webPreferences: Record<string, unknown> | undefined): Record<string, unknown> {
+    const prefs = { ...(webPreferences ?? {}) };
+    delete prefs.preload;
+    return prefs;
 }
