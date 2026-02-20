@@ -41,6 +41,21 @@ function isValidSemver(v: string): boolean {
     return /^\d+\.\d+\.\d+$/.test(v);
 }
 
+function rewriteWorkspaceDependencyVersion(range: string, nextVersion: string): string {
+    // Keep existing range operator for plain semver ranges (e.g. ^1.2.3 / ~1.2.3)
+    // and normalize workspace ranges to an exact released version.
+    if (range.startsWith("workspace:")) return nextVersion;
+
+    const match = /^([~^]?)(\d+\.\d+\.\d+)$/.exec(range.trim());
+    if (match) {
+        const prefix = match[1] ?? "";
+        return `${prefix}${nextVersion}`;
+    }
+
+    // Fallback for non-standard ranges: pin to exact released version.
+    return nextVersion;
+}
+
 async function readPkg(rel: string): Promise<{ path: string; json: Record<string, unknown> }> {
     const path = resolve(root, rel);
     const json = JSON.parse(await readFile(path, "utf-8"));
@@ -102,13 +117,13 @@ for (const rel of PACKAGES) {
     const { path, json } = await readPkg(rel);
     json.version = nextVersion;
 
-    // Replace workspace:* refs in dependencies and peerDependencies with the new version
+    // Keep all workspace package inter-dependencies in sync with the released version.
     for (const field of ["dependencies", "peerDependencies"] as const) {
         const deps = json[field] as Record<string, string> | undefined;
         if (!deps) continue;
         for (const [name, range] of Object.entries(deps)) {
-            if (range.startsWith("workspace:") && workspaceNames.has(name)) {
-                deps[name] = nextVersion;
+            if (workspaceNames.has(name)) {
+                deps[name] = rewriteWorkspaceDependencyVersion(range, nextVersion);
             }
         }
     }
