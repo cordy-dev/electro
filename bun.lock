@@ -30,7 +30,7 @@
     },
     "packages/electro": {
       "name": "@cordy/electro",
-      "version": "1.2.18",
+      "version": "1.2.19",
       "dependencies": {
         "croner": "^10.0.1",
       },
@@ -49,12 +49,12 @@
     },
     "packages/electro-cli": {
       "name": "@cordy/electro-cli",
-      "version": "1.2.18",
+      "version": "1.2.19",
       "bin": {
         "electro": "./dist/index.mjs",
       },
       "dependencies": {
-        "@cordy/electro-generator": "1.2.18",
+        "@cordy/electro-generator": "1.2.19",
       },
       "devDependencies": {
         "@cordy/electro": "workspace:*",
@@ -66,14 +66,14 @@
         "vite": "^8.0.0-beta.14",
       },
       "peerDependencies": {
-        "@cordy/electro": "1.2.18",
+        "@cordy/electro": "1.2.19",
         "electron": ">=40.4.1",
         "vite": ">=8.0.0",
       },
     },
     "packages/electro-generator": {
       "name": "@cordy/electro-generator",
-      "version": "1.2.18",
+      "version": "1.2.19",
       "dependencies": {
         "oxc-parser": "^0.114.0",
         "tinyglobby": "^0.2.15",
@@ -84,7 +84,7 @@
         "vitest": "v4.1.0-beta.3",
       },
       "peerDependencies": {
-        "@cordy/electro": "1.2.18",
+        "@cordy/electro": "1.2.19",
       },
     },
   },
