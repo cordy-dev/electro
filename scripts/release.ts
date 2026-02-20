@@ -22,6 +22,7 @@ const PACKAGES = [
     "packages/electro-generator/package.json",
     "packages/electro-cli/package.json",
 ] as const;
+const LOCKFILE = "bun.lock";
 
 type BumpType = "patch" | "minor" | "major";
 
@@ -134,9 +135,12 @@ for (const rel of PACKAGES) {
     console.log(`  ✓ ${rel}`);
 }
 
+console.log("");
+exec(["bun", "install"], dryRun);
+
 // Git commit + tag
 console.log("");
-exec(["git", "add", ...PACKAGES.map((p) => resolve(root, p))], dryRun);
+exec(["git", "add", ...PACKAGES.map((p) => resolve(root, p)), resolve(root, LOCKFILE)], dryRun);
 exec(["git", "commit", "-m", `release: v${nextVersion}`], dryRun);
 exec(["git", "tag", `v${nextVersion}`], dryRun);
 
