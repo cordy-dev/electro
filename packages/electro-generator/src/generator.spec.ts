@@ -161,6 +161,7 @@ describe("generate()", () => {
 
         const bridge = files.find((f) => f.path === "generated/views/main.bridge.d.ts")!;
         expect(bridge.content).toContain("interface ElectroBridge");
+        expect(bridge.content).toContain("Promise<Awaited<R>>");
         expect(bridge.content).toContain('payment: _SvcApi<typeof import("');
         expect(bridge.content).toContain("paymentService");
         expect(bridge.content).toContain("on<K extends keyof ElectroEventMap>");

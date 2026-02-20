@@ -189,7 +189,10 @@ function generateBridgeTypes(view: ViewDefinition, features: ScannedFeature[], p
     const interfaceBody = featureTypes.length > 0 ? `{\n${featureTypes.join("\n")}\n    }` : "{}";
 
     const content = `${HEADER}
-type _SvcApi<T> = T extends { api(): infer R } ? NonNullable<R> : never;
+type _InvokeApi<T> = {
+    [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => Promise<Awaited<R>> : never;
+};
+type _SvcApi<T> = T extends { api(): infer R } ? _InvokeApi<NonNullable<R>> : never;
 type _EventPayload<T> = T extends { payload(): infer P } ? P : unknown;${eventMapTypes}
 
 export interface ElectroBridge ${interfaceBody}
