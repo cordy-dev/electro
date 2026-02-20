@@ -160,8 +160,8 @@ describe("generate()", () => {
 
         const bridge = files.find((f) => f.path === "generated/views/main.bridge.d.ts")!;
         expect(bridge.content).toContain("interface ElectroBridge");
-        expect(bridge.content).toContain("interface Window");
-        expect(bridge.content).toContain("electro: ElectroBridge");
+        expect(bridge.content).not.toContain("interface Window");
+        expect(bridge.content).not.toContain("electro: ElectroBridge");
         expect(bridge.content).toContain("create(...args: unknown[]): Promise<unknown>");
         expect(bridge.content).toContain("refund(...args: unknown[]): Promise<unknown>");
     });

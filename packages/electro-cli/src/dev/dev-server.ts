@@ -33,6 +33,7 @@ import { resolveMainEntryPath, resolveNodeOutputFormat } from "./node-format";
 import { createNodeConfig } from "./vite-node-config";
 import { createRendererConfig } from "./vite-renderer-config";
 import {
+    createViewBridgeModuleContent,
     findBridgeTypesForView,
     generatedBridgeTypesPaths,
     isGeneratedBridgeTypesPath,
@@ -298,7 +299,7 @@ export class DevServer {
             const bridgePath = resolveViewBridgePath(view);
             if (bridge && bridgePath) {
                 await mkdir(dirname(bridgePath), { recursive: true });
-                await writeFileIfChanged(bridgePath, bridge.content);
+                await writeFileIfChanged(bridgePath, createViewBridgeModuleContent(bridge.content));
             }
 
             for (const relPath of generatedBridgeTypesPaths(view.name)) {

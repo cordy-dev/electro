@@ -154,12 +154,6 @@ function generateBridgeTypes(viewName: string, features: ScannedFeature[], polic
 
     const content = `${HEADER}
 export interface ElectroBridge ${interfaceBody}
-
-declare global {
-    interface Window {
-        electro: ElectroBridge;
-    }
-}
 `;
 
     return {

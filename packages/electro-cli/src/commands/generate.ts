@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from "node:path";
 import type { ElectroConfig } from "@cordy/electro";
 import { generate as generateFiles, scan } from "@cordy/electro-generator";
 import {
+    createViewBridgeModuleContent,
     findBridgeTypesForView,
     generatedBridgeTypesPaths,
     isGeneratedBridgeTypesPath,
@@ -54,7 +55,7 @@ export async function generate(options: GenerateOptions): Promise<void> {
         const bridgePath = resolveViewBridgePath(view);
         if (bridge && bridgePath) {
             await mkdir(dirname(bridgePath), { recursive: true });
-            await writeFileIfChanged(bridgePath, bridge.content);
+            await writeFileIfChanged(bridgePath, createViewBridgeModuleContent(bridge.content));
             console.log(`  ${relative(process.cwd(), bridgePath)}`);
         }
 

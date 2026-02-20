@@ -3,6 +3,7 @@ import type { ViewDefinition } from "@cordy/electro";
 import type { GeneratedFile } from "@cordy/electro-generator";
 
 const GENERATED_BRIDGE_DIRS = ["views", "windows"] as const;
+const VIEW_BRIDGE_MODULE_FILE = "bridge.ts";
 
 /**
  * Resolve generated bridge declaration file for a view.
@@ -20,7 +21,12 @@ export function findBridgeTypesForView(files: readonly GeneratedFile[], viewName
 /** Target location for per-view bridge types next to the config file. */
 export function resolveViewBridgePath(view: ViewDefinition): string | null {
     if (!view.__source) return null;
-    return resolve(dirname(view.__source), "bridge.d.ts");
+    return resolve(dirname(view.__source), VIEW_BRIDGE_MODULE_FILE);
+}
+
+/** Convert generated bridge declaration content into runtime-accessible bridge module. */
+export function createViewBridgeModuleContent(bridgeTypesContent: string): string {
+    return `${bridgeTypesContent.trimEnd()}\n\nexport const electro = window.electro as ElectroBridge;\n`;
 }
 
 export function isGeneratedBridgeTypesPath(path: string): boolean {
