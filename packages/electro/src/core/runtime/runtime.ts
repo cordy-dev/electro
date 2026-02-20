@@ -3,6 +3,7 @@ import { EventBus } from "../event-bus/event-bus";
 import { FeatureStatus } from "../feature/enums";
 import { FeatureManager } from "../feature/manager";
 import type { FeatureConfig, FeatureId } from "../feature/types";
+import { IpcBridge } from "../ipc/bridge";
 import { createConsoleHandler } from "../logger/console-handler";
 import { Logger } from "../logger/logger";
 import { StateMachine } from "../state-machine/state-machine";
@@ -32,6 +33,7 @@ export class Runtime {
     private readonly windowManager: WindowManager;
     private readonly viewManager: ViewManager;
     private readonly eventBridge: EventBridge | null = null;
+    private readonly ipcBridge: IpcBridge | null = null;
 
     constructor(config?: RuntimeConfig) {
         this.state = new StateMachine<RuntimeState>({
@@ -71,6 +73,7 @@ export class Runtime {
         // Wire event bridge for forwarding events to renderer views
         if (viewRegistry.some((v) => v.features && v.features.length > 0)) {
             this.eventBridge = new EventBridge(this.eventBus, this.viewManager, viewRegistry);
+            this.ipcBridge = new IpcBridge(this.featureManager, this.viewManager, viewRegistry);
         }
 
         // Pass managers to feature manager
@@ -94,8 +97,10 @@ export class Runtime {
         try {
             this.eventBridge?.start();
             await this.featureManager.bootstrap();
+            await this.ipcBridge?.start();
             this.state.transition(RuntimeState.RUNNING);
         } catch (err) {
+            this.ipcBridge?.stop();
             this.eventBridge?.stop();
             this.state.transition(RuntimeState.FAILED);
             throw err;
@@ -105,6 +110,7 @@ export class Runtime {
     async shutdown(): Promise<void> {
         this.state.assertState(RuntimeState.RUNNING);
         this.state.transition(RuntimeState.STOPPING);
+        this.ipcBridge?.stop();
         this.eventBridge?.stop();
         await this.featureManager.shutdown();
         this.viewManager.destroyAll();
