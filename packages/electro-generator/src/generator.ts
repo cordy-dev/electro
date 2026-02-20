@@ -5,7 +5,7 @@
  * Uses PolicyEngine for deny-by-default per-view filtering.
  */
 
-import { dirname, join, relative } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { ViewDefinition } from "@cordy/electro";
 import { PolicyEngine } from "@cordy/electro";
 import type { GeneratedFile, ScannedFeature, ScannedWindow, ScanResult } from "./types";
@@ -102,6 +102,22 @@ contextBridge.exposeInMainWorld("electro", ${bridgeObject});
         path: `generated/preload/${viewName}.gen.ts`,
         content,
     };
+}
+
+function toRuntimeImportPathFrom(outputFilePath: string, sourceFilePath: string): string {
+    const rel = relative(dirname(outputFilePath), sourceFilePath).replaceAll("\\", "/");
+    return rel.startsWith(".") ? rel : `./${rel}`;
+}
+
+function resolvePreloadExtensionImport(view: ViewDefinition, generatedPreloadPath: string, specifier: string): string {
+    const trimmed = specifier.trim();
+    if (trimmed.length === 0) return trimmed;
+
+    const isPathLike = trimmed.startsWith(".") || isAbsolute(trimmed);
+    if (!isPathLike) return trimmed;
+
+    const resolvedPath = isAbsolute(trimmed) ? trimmed : resolve(dirname(view.__source), trimmed);
+    return toRuntimeImportPathFrom(generatedPreloadPath, resolvedPath);
 }
 
 // ── Bridge types generator ──────────────────────────────────────────
@@ -392,7 +408,7 @@ export interface GeneratorOutput {
  * Generate all output files from scan results and view definitions.
  */
 export function generate(input: GeneratorInput): GeneratorOutput {
-    const { scanResult, views, srcDir } = input;
+    const { scanResult, views, srcDir, outputDir } = input;
     const policy = new PolicyEngine(views);
     const files: GeneratedFile[] = [];
 
@@ -405,14 +421,15 @@ export function generate(input: GeneratorInput): GeneratorOutput {
             }
         }
 
+        const generatedPreloadPath = join(outputDir, "generated", "preload", `${view.name}.gen.ts`);
         const preloadExtensions = new Set<string>();
         if (typeof view.preload === "string" && view.preload.length > 0) {
-            preloadExtensions.add(view.preload);
+            preloadExtensions.add(resolvePreloadExtensionImport(view, generatedPreloadPath, view.preload));
         }
 
         const webPreferencesPreload = (view.webPreferences as Record<string, unknown> | undefined)?.preload;
         if (typeof webPreferencesPreload === "string" && webPreferencesPreload.length > 0) {
-            preloadExtensions.add(webPreferencesPreload);
+            preloadExtensions.add(resolvePreloadExtensionImport(view, generatedPreloadPath, webPreferencesPreload));
         }
 
         files.push(generatePreload(view.name, scanResult.features, policy, [...preloadExtensions]));

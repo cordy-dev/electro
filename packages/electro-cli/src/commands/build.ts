@@ -306,7 +306,8 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
         sourcemap: args.sourcemap,
         customLogger: args.logger,
         logLevel: "info",
-        format: args.format,
+        // Sandboxed preload should be emitted as CJS for stable execution.
+        format: "cjs",
         cjsInteropDeps: args.cjsInteropDeps,
     });
 
@@ -322,7 +323,7 @@ async function buildPreload(args: PreloadBuildArgs): Promise<void> {
             sourcemap: args.sourcemap,
             customLogger: args.logger,
             logLevel: "info",
-            format: args.format,
+            format: "cjs",
             cjsInteropDeps: args.cjsInteropDeps,
         });
         (baseConfig.plugins as Plugin[]).push(isolateEntriesPlugin(subBuildConfig));

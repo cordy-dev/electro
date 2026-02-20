@@ -370,7 +370,8 @@ export class DevServer {
             logLevel: this.logLevel,
             clearScreen: this.clearScreen,
             sourcemap: this.sourcemap,
-            format: this.nodeFormat,
+            // Sandboxed preload cannot run ESM imports reliably; force CJS output.
+            format: "cjs",
             cjsInteropDeps,
         });
 
@@ -386,7 +387,7 @@ export class DevServer {
                 logLevel: this.logLevel,
                 clearScreen: this.clearScreen,
                 sourcemap: this.sourcemap,
-                format: this.nodeFormat,
+                format: "cjs",
                 cjsInteropDeps,
             });
             (baseConfig.plugins as Plugin[]).push(isolateEntriesPlugin(subBuildConfig));

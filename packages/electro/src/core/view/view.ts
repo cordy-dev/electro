@@ -78,7 +78,7 @@ export class View {
     }
 }
 
-const PRELOAD_EXTENSIONS = ["mjs", "cjs", "js"] as const;
+const PRELOAD_EXTENSIONS = ["cjs", "mjs", "js"] as const;
 
 function resolveDefaultPreloadPath(viewId: string): string | null {
     const preloadDir = join(import.meta.dirname, "..", "preload");
