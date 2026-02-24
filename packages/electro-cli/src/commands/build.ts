@@ -7,7 +7,7 @@ import { build as viteBuild, version as viteVersion } from "vite";
 import { loadConfig } from "../dev/config-loader";
 import { resolveExternals } from "../dev/externals";
 import type { SessionMeta } from "../dev/logger";
-import { buildScope, createBuildLogger, footer, session, setLogLevel, startTimer, step, stepFail } from "../dev/logger";
+import { buildScope, createBuildLogger, footer, logSession, setLogLevel, startTimer, step, stepFail } from "../dev/logger";
 import type { NodeOutputFormat } from "../dev/node-format";
 import { resolveNodeOutputFormat } from "../dev/node-format";
 import { createNodeConfig } from "../dev/vite-node-config";
@@ -66,7 +66,7 @@ export async function build(options: BuildOptions): Promise<void> {
 
     const sessionMeta: SessionMeta = {
         root,
-        main: mainEntry,
+        runtime: mainEntry,
         preload: rendererViews.length > 0 ? resolve(codegenDir, "generated/preload") : null,
         renderer: rendererViews.length > 0 ? resolve(root, dirname(relative(root, rendererViews[0].__source))) : null,
         mode: "build",
@@ -75,7 +75,7 @@ export async function build(options: BuildOptions): Promise<void> {
             entry: resolve(dirname(w.__source), w.entry!),
         })),
     };
-    session(sessionMeta);
+    logSession(sessionMeta);
 
     // 4. Codegen → .electro/generated/
     const codegenTimer = startTimer();

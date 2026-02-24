@@ -6,7 +6,14 @@
         "useIgnoreFile": true
     },
     "files": {
-        "includes": ["**", "!dist", "!out", "!node_modules", "!**/*.gen.ts", "!examples"]
+        "includes": [
+            "**",
+            "!dist",
+            "!out",
+            "!node_modules",
+            "!**/*.gen.ts",
+            "!examples"
+        ]
     },
     "formatter": {
         "enabled": true,
@@ -40,11 +47,27 @@
                     "options": {
                         "identifierOrder": "natural",
                         "groups": [
-                            [":NODE:", ":BUN:"],
-                            [":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:"],
-                            ["@main/**", "@pip/**", "@splash/**", "@shared/**", "~icons/**"],
-                            [":ALIAS:"],
-                            [":PATH:"]
+                            [
+                                ":NODE:",
+                                ":BUN:"
+                            ],
+                            [
+                                ":PACKAGE:",
+                                ":PACKAGE_WITH_PROTOCOL:"
+                            ],
+                            [
+                                "@main/**",
+                                "@pip/**",
+                                "@splash/**",
+                                "@shared/**",
+                                "~icons/**"
+                            ],
+                            [
+                                ":ALIAS:"
+                            ],
+                            [
+                                ":PATH:"
+                            ]
                         ]
                     }
                 }
@@ -80,7 +103,7 @@
             "suspicious": {
                 "noAssignInExpressions": "off",
                 "noEmptyInterface": "off",
-                "noExplicitAny": "warn",
+                "noExplicitAny": "off",
                 "noImportCycles": "error"
             },
             "complexity": {

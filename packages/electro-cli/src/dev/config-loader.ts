@@ -30,6 +30,18 @@ export async function loadConfig(configPath: string): Promise<LoadedConfig> {
         throw new Error(`${configPath} must define a runtime via defineRuntime()`);
     }
 
+    if (!config.codegen || !config.codegen?.scanDir) {
+        config.codegen = {
+            scanDir: resolve(root, "src")
+        }
+    }
+
+    if (config.views && config.views?.length > 0) {
+        for (const view of config.views) {
+            if (!view.entry) view.entry = "./index.html";
+        }
+    }
+
     validateConfig(config);
 
     return { config, configPath: absolutePath, root };

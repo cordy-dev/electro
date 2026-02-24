@@ -11,6 +11,13 @@ import { isolateEntriesPlugin } from "../plugins/isolate-entries";
 import { modulePathPlugin } from "../plugins/module-path";
 import { workerPlugin } from "../plugins/worker";
 import { validateViteVersion } from "../validate";
+import {
+    createViewBridgeModuleContent,
+    findBridgeTypesForView,
+    generatedBridgeTypesPaths,
+    isGeneratedBridgeTypesPath,
+    resolveViewBridgePath,
+} from "./bridge-types";
 import { loadConfig } from "./config-loader";
 import type { ManagedProcess } from "./electron-launcher";
 import { launchElectron } from "./electron-launcher";
@@ -22,7 +29,7 @@ import {
     note,
     patchLogger,
     runtimeLog,
-    session,
+    logSession,
     setLogLevel,
     startTimer,
     step,
@@ -32,13 +39,6 @@ import type { NodeOutputFormat } from "./node-format";
 import { resolveMainEntryPath, resolveNodeOutputFormat } from "./node-format";
 import { createNodeConfig } from "./vite-node-config";
 import { createRendererConfig } from "./vite-renderer-config";
-import {
-    createViewBridgeModuleContent,
-    findBridgeTypesForView,
-    generatedBridgeTypesPaths,
-    isGeneratedBridgeTypesPath,
-    resolveViewBridgePath,
-} from "./bridge-types";
 
 const MAIN_RESTART_DEBOUNCE_MS = 80;
 const CONFIG_DEBOUNCE_MS = 300;
@@ -127,36 +127,33 @@ export class DevServer {
         // Track config paths for watching
         this.configPaths.add(loaded.configPath);
         for (const view of this.config.views ?? []) {
+            view.root = dirname(view.__source);
             this.configPaths.add(view.__source);
         }
 
         // Print session banner
         const views = this.config.views ?? [];
         const rendererViews = views.filter((v) => v.entry);
-        const srcDir = resolve(this.root, "src");
 
-        const mainSourceDir = dirname(this.config.runtime.__source);
-        const mainEntry = resolve(mainSourceDir, this.config.runtime.entry);
+        const runtimeDir = dirname(this.config.runtime.__source);
+        const runtimeEntry = resolve(runtimeDir, this.config.runtime.entry);
 
         const sessionMeta: SessionMeta = {
             root: this.root,
-            main: mainEntry,
+            runtime: runtimeEntry,
             preload: rendererViews.length > 0 ? resolve(this.outputDir, "generated/preload") : null,
-            renderer:
-                rendererViews.length > 0
-                    ? resolve(this.root, dirname(relative(this.root, rendererViews[0].__source)))
-                    : null,
-            windows: rendererViews.map((w) => ({
+            views: rendererViews.map((w) => ({
                 name: w.name,
-                entry: resolve(dirname(w.__source), w.entry!),
+                root: w.root!,
+                entry: resolve(w.root!, w.entry!),
             })),
         };
-        session(sessionMeta);
+        logSession(sessionMeta);
 
         // 2. Run codegen
         const codegenTimer = startTimer();
         try {
-            await this.runCodegen(this.outputDir, srcDir);
+            await this.runCodegen(this.outputDir, this.config.codegen!.scanDir!);
             step("codegen", codegenTimer());
         } catch (err) {
             stepFail("codegen", err instanceof Error ? err.message : String(err));
@@ -598,7 +595,7 @@ export class DevServer {
         const detail = lastError instanceof Error ? ` Last error: ${lastError.message}` : "";
         throw new Error(
             `Main entry was not generated in time (${MAIN_ENTRY_WAIT_TIMEOUT_MS}ms).` +
-                ` Checked in: ${mainOutDir}.${detail}`,
+            ` Checked in: ${mainOutDir}.${detail}`,
         );
     }
 

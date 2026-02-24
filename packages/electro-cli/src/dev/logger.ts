@@ -139,13 +139,13 @@ export function footer(message: string, url?: string): void {
 
 export interface SessionMeta {
     root: string;
-    main: string;
+    runtime: string;
     preload: string | null;
-    renderer: string | null;
     /** "dev" (default) or "build" */
     mode?: "dev" | "build";
-    windows?: Array<{
+    views?: Array<{
         name: string;
+        root: string;
         entry: string;
     }>;
 }
@@ -155,35 +155,66 @@ function toProjectRelative(root: string, absolutePath: string): string {
     return rel || ".";
 }
 
-export function session(meta: SessionMeta): void {
+export function logSession(meta: SessionMeta): void {
     if (levels[currentLevel] > levels.info) return;
 
     const isBuild = meta.mode === "build";
     const projectName = basename(meta.root);
-    const mainEntry = toProjectRelative(meta.root, meta.main);
-    const preloadEntry = meta.preload ? toProjectRelative(meta.root, meta.preload) : `${dim}(none)${reset}`;
-    const rendererEntry = meta.renderer ? toProjectRelative(meta.root, meta.renderer) : `${dim}(none)${reset}`;
+
+    const runtimeEntry = toProjectRelative(meta.root, meta.runtime);
+    const preloadEntry = meta.preload
+        ? toProjectRelative(meta.root, meta.preload)
+        : `${dim}(none)${reset}`;
+
+
+    const firstView = meta.views?.[0] ?? null;
+    const viewEntry = firstView
+        ? toProjectRelative(meta.root, firstView.entry)
+        : `${dim}(none)${reset}`;
 
     const command = isBuild ? "build" : "dev";
     console.log(`\n${bold}${yellow}⚡ electro ${command}${reset} → ${cyan}${projectName}${reset}\n`);
 
-    const mainMode = isBuild ? "build" : "watch";
+    const runtimeMode = isBuild ? "build" : "watch";
     const preloadMode = isBuild ? "build" : "watch";
-    const rendererMode = isBuild ? "build" : "dev server";
+    const viewsMode = isBuild ? "build" : "dev server";
 
-    const entryWidth = Math.max(14, mainEntry.length, preloadEntry.length, rendererEntry.length) + 2;
+    const rows = [
+        {
+            scope: `${cyan}runtime${reset}`,
+            entry: runtimeEntry,
+            mode: `${dim}${runtimeMode}${reset}`,
+        },
+        {
+            scope: `${yellow}preload${reset}`,
+            entry: preloadEntry,
+            mode: `${dim}${preloadMode}${reset}`,
+        },
+        {
+            scope: `${green}view${reset}`,
+            entry: viewEntry,
+            mode: `${dim}${viewsMode}${reset}`,
+        },
+    ];
 
-    console.log(`  ${dim}Scope      ${"Entry".padEnd(entryWidth)}Mode${reset}`);
-    console.log(`  ${cyan}main${reset}       ${mainEntry.padEnd(entryWidth)}${dim}${mainMode}${reset}`);
-    console.log(`  ${yellow}preload${reset}    ${preloadEntry.padEnd(entryWidth)}${dim}${preloadMode}${reset}`);
-    console.log(`  ${green}renderer${reset}   ${rendererEntry.padEnd(entryWidth)}${dim}${rendererMode}${reset}`);
+    const scopeWidth = Math.max("Scope".length, ...rows.map((r) => visibleLength(r.scope))) + 2;
+    const entryWidth = Math.max("Entry".length, ...rows.map((r) => visibleLength(r.entry))) + 2;
 
-    if (meta.windows && meta.windows.length > 0) {
+    console.log(`  ${dim}${padVisible("Scope", scopeWidth)}${padVisible("Entry", entryWidth)}Mode${reset}`);
+
+    for (const row of rows) {
+        console.log(`  ${padVisible(row.scope, scopeWidth)}${padVisible(row.entry, entryWidth)}${row.mode}`);
+    }
+
+    if (meta.views && meta.views.length > 0) {
         console.log("");
-        console.log(`  ${dim}Windows${reset}    ${meta.windows.length} configured`);
-        for (const win of meta.windows) {
-            const winEntry = toProjectRelative(meta.root, win.entry);
-            console.log(`  ${win.name.padEnd(10)} ${dim}${winEntry}${reset}`);
+        console.log(`  ${dim}Views${reset}    ${meta.views.length} configured`);
+
+        const viewNameWidth = Math.max(4, ...meta.views.map((v) => v.name.length)) + 2;
+
+        for (const view of meta.views) {
+            const entry = toProjectRelative(meta.root, view.entry);
+            console.log(`  ${padVisible(view.name, viewNameWidth)}${dim}${entry}${reset}`);
         }
     }
 
@@ -199,6 +230,15 @@ const VITE_TAG_RE = new RegExp(String.raw`(?:\x1b\[[0-9;]*m)*\[(vite(?:-plugin-[
 
 function retagMessage(msg: string): string {
     return msg.replace(VITE_TAG_RE, `[${bold}${yellow}electro${reset}]`);
+}
+
+function visibleLength(value: string): number {
+    return value.replace(ANSI_RE, "").length;
+}
+
+function padVisible(value: string, width: number): string {
+    const len = visibleLength(value);
+    return value + " ".repeat(Math.max(0, width - len));
 }
 
 /**
