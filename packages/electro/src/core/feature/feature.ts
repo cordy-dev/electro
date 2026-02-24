@@ -31,7 +31,7 @@ const TRANSITIONS: Record<FeatureStatus, FeatureStatus[]> = {
 export class Feature<FId extends FeatureId> {
     public readonly state: StateMachine<FeatureStatus>;
     public controller: AbortController = new AbortController();
-    // biome-ignore lint/suspicious/noExplicitAny: runtime context is built dynamically in buildContext()
+
     public context: FeatureContext<any>;
     public serviceManager: ServiceManager | null = null;
     private taskManager: TaskManager | null = null;

@@ -40,11 +40,11 @@ cli.command("dev", "Start development server with Electron")
     .option("--logLevel <level>", "Log level (info | warn | error | silent)")
     .option("--sourcemap <mode>", "Sourcemap mode (linked | inline | external | none)")
     .option("--outDir <dir>", "Output directory override (default: .electro)")
-    .option('--inspect [port]', `[boolean | number] enable V8 inspector on the specified port`)
-    .option('--inspectBrk [port]', `[boolean | number] enable V8 inspector on the specified port`)
-    .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
-    .option('--noSandbox', `[boolean] forces renderer process to run un-sandboxed`)
-    .option('--rendererOnly', `[boolean] only dev server for the renderer`)
+    .option("--inspect [port]", `[boolean | number] enable V8 inspector on the specified port`)
+    .option("--inspectBrk [port]", `[boolean | number] enable V8 inspector on the specified port`)
+    .option("--remoteDebuggingPort <port>", `[string] port for remote debugging`)
+    .option("--noSandbox", `[boolean] forces renderer process to run un-sandboxed`)
+    .option("--rendererOnly", `[boolean] only dev server for the renderer`)
     .action(dev);
 
 cli.help();

@@ -26,10 +26,10 @@ import type { SessionMeta } from "./logger";
 import {
     footer,
     info,
+    logSession,
     note,
     patchLogger,
     runtimeLog,
-    logSession,
     setLogLevel,
     startTimer,
     step,
@@ -595,7 +595,7 @@ export class DevServer {
         const detail = lastError instanceof Error ? ` Last error: ${lastError.message}` : "";
         throw new Error(
             `Main entry was not generated in time (${MAIN_ENTRY_WAIT_TIMEOUT_MS}ms).` +
-            ` Checked in: ${mainOutDir}.${detail}`,
+                ` Checked in: ${mainOutDir}.${detail}`,
         );
     }
 

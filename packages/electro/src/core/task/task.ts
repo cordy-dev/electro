@@ -27,7 +27,6 @@ export class Task<TId extends TaskId, TPayload = void> {
     private _enabled = false;
     private _abortControllers = new Set<AbortController>();
     private _cronJob: Cron | null = null;
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
     private _ctx: FeatureContext<any> | null = null;
     private _activeDedupeKeys = new Set<string>();
 
@@ -40,7 +39,6 @@ export class Task<TId extends TaskId, TPayload = void> {
     // ── Lifecycle ────────────────────────────────────────────────────────
 
     /** Activate the task within a feature context. Idempotent. */
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
     enable(ctx: FeatureContext<any>): void {
         if (this._enabled) return;
 
@@ -203,7 +201,6 @@ export class Task<TId extends TaskId, TPayload = void> {
 
     // ── Private: Retry loop ─────────────────────────────────────────────
 
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
     private async executeWithRetry(ctx: FeatureContext<any>, payload: TPayload | undefined): Promise<Error | null> {
         const retryConfig = this.config.retry;
         const maxAttempts = retryConfig ? retryConfig.attempts : 1;

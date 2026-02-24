@@ -4,14 +4,6 @@ import type { ElectroConfig } from "@cordy/electro";
 import { generate, scan } from "@cordy/electro-generator";
 import type { Plugin } from "vite";
 import { build as viteBuild, version as viteVersion } from "vite";
-import { loadConfig } from "../dev/config-loader";
-import { resolveExternals } from "../dev/externals";
-import type { SessionMeta } from "../dev/logger";
-import { buildScope, createBuildLogger, footer, logSession, setLogLevel, startTimer, step, stepFail } from "../dev/logger";
-import type { NodeOutputFormat } from "../dev/node-format";
-import { resolveNodeOutputFormat } from "../dev/node-format";
-import { createNodeConfig } from "../dev/vite-node-config";
-import { createRendererConfig } from "../dev/vite-renderer-config";
 import {
     createViewBridgeModuleContent,
     findBridgeTypesForView,
@@ -19,6 +11,23 @@ import {
     isGeneratedBridgeTypesPath,
     resolveViewBridgePath,
 } from "../dev/bridge-types";
+import { loadConfig } from "../dev/config-loader";
+import { resolveExternals } from "../dev/externals";
+import type { SessionMeta } from "../dev/logger";
+import {
+    buildScope,
+    createBuildLogger,
+    footer,
+    logSession,
+    setLogLevel,
+    startTimer,
+    step,
+    stepFail,
+} from "../dev/logger";
+import type { NodeOutputFormat } from "../dev/node-format";
+import { resolveNodeOutputFormat } from "../dev/node-format";
+import { createNodeConfig } from "../dev/vite-node-config";
+import { createRendererConfig } from "../dev/vite-renderer-config";
 import { assetPlugin } from "../plugins/asset";
 import { bytecodePlugin } from "../plugins/bytecode";
 import { isolateEntriesPlugin } from "../plugins/isolate-entries";

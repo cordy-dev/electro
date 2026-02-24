@@ -43,7 +43,7 @@ export type TaskConfig<TId extends TaskId, TPayload = void> = {
  */
 export interface TaskInstance {
     readonly id: TaskId;
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
+
     enable(ctx: FeatureContext<any>): void;
     disable(mode?: StopMode): void;
     start(payload?: unknown): Promise<void>;
@@ -76,7 +76,7 @@ export interface TaskStatusInfo {
  */
 export interface CreatedTask<TId extends TaskId = TaskId, TPayload = void> {
     readonly id: TId;
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
+
     enable(ctx: FeatureContext<any>): void;
     disable(mode?: StopMode): void;
     start(payload?: TPayload): Promise<void>;

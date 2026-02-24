@@ -1,5 +1,5 @@
-import { ServiceScope } from "../service/enums";
 import type { FeatureManager } from "../feature/manager";
+import { ServiceScope } from "../service/enums";
 import type { ViewManager } from "../view/manager";
 import type { ViewRegistryEntry } from "../view/types";
 

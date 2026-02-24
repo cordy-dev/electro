@@ -13,7 +13,6 @@ export class TaskManager {
     private tasks = new Map<TaskId, TaskInstance>();
     private _isShutdown = false;
 
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
     constructor(private readonly ctx: FeatureContext<any>) {}
 
     // ── Registration ─────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ export class Service<Scope extends ServiceScope, TApi, TId extends ServiceId = S
     }
 
     /** Invoke the factory and store the result. Idempotent — no-op if already Active. */
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
+
     build(ctx: FeatureContext<any>): void {
         if (this._status === ServiceStatus.ACTIVE) return;
         if (this._status === ServiceStatus.DESTROYED) {

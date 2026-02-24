@@ -35,7 +35,6 @@ export class FeatureManager {
      * If a feature with the same ID is already registered, a warning is logged and the feature is skipped.
      * @throws If a service or task ID is already owned by another feature.
      */
-    // biome-ignore lint/suspicious/noExplicitAny: variance — typed FeatureConfig<"x"> must be assignable here
     public register(features: FeatureConfig<any> | FeatureConfig<any>[]): void {
         const list = Array.isArray(features) ? features : [features];
 

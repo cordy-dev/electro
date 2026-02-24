@@ -162,15 +162,10 @@ export function logSession(meta: SessionMeta): void {
     const projectName = basename(meta.root);
 
     const runtimeEntry = toProjectRelative(meta.root, meta.runtime);
-    const preloadEntry = meta.preload
-        ? toProjectRelative(meta.root, meta.preload)
-        : `${dim}(none)${reset}`;
-
+    const preloadEntry = meta.preload ? toProjectRelative(meta.root, meta.preload) : `${dim}(none)${reset}`;
 
     const firstView = meta.views?.[0] ?? null;
-    const viewEntry = firstView
-        ? toProjectRelative(meta.root, firstView.entry)
-        : `${dim}(none)${reset}`;
+    const viewEntry = firstView ? toProjectRelative(meta.root, firstView.entry) : `${dim}(none)${reset}`;
 
     const command = isBuild ? "build" : "dev";
     console.log(`\n${bold}${yellow}⚡ electro ${command}${reset} → ${cyan}${projectName}${reset}\n`);

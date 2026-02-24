@@ -1,4 +1,4 @@
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 import type { ViewDefinition } from "@cordy/electro";
 import type { InlineConfig, Logger, Plugin, UserConfig } from "vite";
 import { mergeConfig } from "vite";

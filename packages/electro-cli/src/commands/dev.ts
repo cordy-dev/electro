@@ -9,15 +9,15 @@ interface DevOptions {
     rendererOnly?: boolean;
     sourcemap?: string;
     outDir?: string;
-    inspect?: boolean | string
-    inspectBrk?: boolean | string
-    remoteDebuggingPort?: string
-    noSandbox?: boolean
+    inspect?: boolean | string;
+    inspectBrk?: boolean | string;
+    remoteDebuggingPort?: string;
+    noSandbox?: boolean;
 }
 
 export async function dev(options: DevOptions): Promise<void> {
     if (options.remoteDebuggingPort) {
-        process.env.REMOTE_DEBUGGING_PORT = options.remoteDebuggingPort
+        process.env.REMOTE_DEBUGGING_PORT = options.remoteDebuggingPort;
     }
 
     // Set NODE_OPTIONS to pass debug flags to the Electron main process
@@ -32,26 +32,27 @@ export async function dev(options: DevOptions): Promise<void> {
     }
 
     if (options.noSandbox) {
-        process.env.NO_SANDBOX = '1'
+        process.env.NO_SANDBOX = "1";
     }
 
-    if ((options as any)['--']) {
-        process.env.ELECTRON_CLI_ARGS = JSON.stringify((options as any)['--'])
+    if ((options as any)["--"]) {
+        process.env.ELECTRON_CLI_ARGS = JSON.stringify((options as any)["--"]);
     }
 
     if (options.sourcemap) {
         validateSourcemap(options.sourcemap);
     }
 
-    process.env.ELECTRO_MODE = 'development'
+    process.env.ELECTRO_MODE = "development";
 
-    const createServer = () => new DevServer(options.config, {
-        logLevel: options.logLevel,
-        clearScreen: options.clearScreen,
-        rendererOnly: options.rendererOnly,
-        sourcemap: options.sourcemap,
-        outDir: options.outDir,
-    });
+    const createServer = () =>
+        new DevServer(options.config, {
+            logLevel: options.logLevel,
+            clearScreen: options.clearScreen,
+            rendererOnly: options.rendererOnly,
+            sourcemap: options.sourcemap,
+            outDir: options.outDir,
+        });
 
     let server = createServer();
 
@@ -82,5 +83,5 @@ export async function dev(options: DevOptions): Promise<void> {
     await startWithRestart();
 
     // Keep process alive — Electron exit and signals handle shutdown
-    await new Promise(() => { });
+    await new Promise(() => {});
 }

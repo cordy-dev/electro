@@ -2,11 +2,11 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import type { InlineConfig, Logger, Plugin, UserConfig } from "vite";
 import { mergeConfig } from "vite";
-import type { NodeOutputFormat } from "./node-format";
 import { cjsExternalInteropPlugin } from "../plugins/cjs-external-interop";
 import { esmShimPlugin } from "../plugins/esm-shim";
 import { importMetaPlugin } from "../plugins/import-meta";
 import { enforceMergedNodeConfig, validateMergedNodeConfig } from "../validate";
+import type { NodeOutputFormat } from "./node-format";
 
 export interface NodeConfigOptions {
     /** "main" or "preload" */

@@ -29,7 +29,7 @@ export interface ServiceInfo {
 export interface ServiceInstance {
     readonly id: ServiceId;
     readonly scope: ServiceScope;
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
+
     build(ctx: FeatureContext<any>): void;
     destroy(): void;
     api(): unknown;
@@ -49,7 +49,7 @@ export interface ServiceInstance {
 export interface CreatedService<Scope extends ServiceScope = ServiceScope, TApi = unknown> {
     readonly id: ServiceId;
     readonly scope: Scope;
-    // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
+
     build(ctx: FeatureContext<any>): void;
     destroy(): void;
     api(): TApi | null;

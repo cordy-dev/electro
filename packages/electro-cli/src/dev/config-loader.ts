@@ -32,8 +32,8 @@ export async function loadConfig(configPath: string): Promise<LoadedConfig> {
 
     if (!config.codegen || !config.codegen?.scanDir) {
         config.codegen = {
-            scanDir: resolve(root, "src")
-        }
+            scanDir: resolve(root, "src"),
+        };
     }
 
     if (config.views && config.views?.length > 0) {

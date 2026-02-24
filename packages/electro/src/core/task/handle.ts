@@ -10,7 +10,6 @@ import type { StopMode, TaskInstance, TaskStatusInfo } from "./types";
 export class TaskHandle<TPayload = unknown> {
     constructor(
         private readonly task: TaskInstance,
-        // biome-ignore lint/suspicious/noExplicitAny: type-erased — accepts any FeatureContext variant
         private readonly ctx: FeatureContext<any> | undefined = undefined,
     ) {}
 

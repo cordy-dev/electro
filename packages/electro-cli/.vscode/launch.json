@@ -8,11 +8,7 @@
             // The path to a JavaScript or TypeScript file to run.
             "program": "./src/index.ts",
             // The arguments to pass to the program, if any.
-            "args": [
-                "dev",
-                "--config",
-                "./example/electro.config.ts",
-            ],
+            "args": ["dev", "--config", "./example/electro.config.ts"],
             // The working directory of the program.
             "cwd": "${workspaceFolder}",
             // The environment variables to pass to the program.
@@ -31,7 +27,7 @@
             "runtime": "bun",
             // The arguments to pass to the `bun` executable, if any.
             // Unlike `args`, these are passed to the executable itself, not the program.
-            "runtimeArgs": [],
+            "runtimeArgs": []
         },
         {
             "type": "bun",
@@ -40,11 +36,7 @@
             // The path to a JavaScript or TypeScript file to run.
             "program": "./src/index.ts",
             // The arguments to pass to the program, if any.
-            "args": [
-                "build",
-                "--config",
-                "./example/electro.config.ts",
-            ],
+            "args": ["build", "--config", "./example/electro.config.ts"],
             // The working directory of the program.
             "cwd": "${workspaceFolder}",
             // The environment variables to pass to the program.
@@ -63,7 +55,7 @@
             "runtime": "bun",
             // The arguments to pass to the `bun` executable, if any.
             // Unlike `args`, these are passed to the executable itself, not the program.
-            "runtimeArgs": [],
-        },
+            "runtimeArgs": []
+        }
     ]
 }

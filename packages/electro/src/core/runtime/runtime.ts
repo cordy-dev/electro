@@ -86,7 +86,6 @@ export class Runtime {
         }
     }
 
-    // biome-ignore lint/suspicious/noExplicitAny: variance — typed FeatureConfig<"x"> must be assignable here
     register(features: FeatureConfig<any> | FeatureConfig<any>[]): void {
         this.state.assertState(RuntimeState.CREATED);
         this.featureManager.register(features);
