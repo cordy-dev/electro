@@ -1,6 +1,6 @@
 {
     "name": "@cordy/electro-cli",
-    "version": "1.2.19",
+    "version": "1.2.20",
     "description": "CLI for @cordy/electro — dev server, build, and code generation commands",
     "license": "MIT",
     "type": "module",
@@ -30,10 +30,11 @@
     "main": "./dist/index.mjs",
     "types": "./dist/index.d.mts",
     "files": [
+        "bin",
         "dist"
     ],
     "bin": {
-        "electro": "./dist/index.mjs"
+        "electro": "bin/cli.js"
     },
     "exports": {
         ".": {
@@ -48,7 +49,7 @@
     },
     "peerDependencies": {
         "@cordy/electro": "1.2.19",
-        "electron": ">=40.4.1",
+        "electron": ">=40.6.0",
         "vite": ">=8.0.0"
     },
     "dependencies": {
@@ -56,11 +57,11 @@
     },
     "devDependencies": {
         "@cordy/electro": "workspace:*",
-        "@types/node": "^25.2.3",
+        "@types/node": "^25.3.0",
         "cac": "^6.7.14",
-        "electron": "^40.4.1",
+        "electron": "^40.6.0",
         "magic-string": "^0.30.21",
         "tsdown": "^0.20.3",
-        "vite": "^8.0.0-beta.14"
+        "vite": "^8.0.0-beta.15"
     }
 }

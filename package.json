@@ -17,6 +17,6 @@
         "publish:packages": "bun scripts/publish.ts"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.4.0"
+        "@biomejs/biome": "^2.4.4"
     }
 }
