@@ -27,7 +27,7 @@ export async function findElectronBin(root: string): Promise<string> {
         const pathTxtPath = resolve(electronDir, "path.txt");
         if (await fileExists(pathTxtPath)) {
             const binPath = (await readFile(pathTxtPath, "utf-8")).trim();
-            const resolved = resolve(electronDir, binPath);
+            const resolved = resolve(electronDir, "dist", binPath);
             if (await fileExists(resolved)) return resolved;
         }
     } catch {
