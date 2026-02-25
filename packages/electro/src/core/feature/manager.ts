@@ -18,7 +18,7 @@ export class FeatureManager {
     constructor(
         private logger: LoggerContext,
         private eventBus: EventBus | undefined = undefined,
-    ) {}
+    ) { }
 
     /** @internal Set the window manager (called by Runtime before bootstrap). */
     setWindowManager(windowManager: WindowManager): void {
@@ -56,7 +56,7 @@ export class FeatureManager {
                 if (owner !== undefined) {
                     throw new Error(
                         `Service "${svc.id}" is already registered by feature "${owner}". ` +
-                            `Feature "${item.id}" cannot claim it — service IDs must be globally unique.`,
+                        `Feature "${item.id}" cannot claim it — service IDs must be globally unique.`,
                     );
                 }
             }
@@ -67,7 +67,7 @@ export class FeatureManager {
                 if (owner !== undefined) {
                     throw new Error(
                         `Task "${task.id}" is already registered by feature "${owner}". ` +
-                            `Feature "${item.id}" cannot claim it — task IDs must be globally unique.`,
+                        `Feature "${item.id}" cannot claim it — task IDs must be globally unique.`,
                     );
                 }
             }
@@ -95,7 +95,7 @@ export class FeatureManager {
         return [...this.registry.values()];
     }
 
-    public async bootstrap() {
+    public async bootstrap(): Promise<void> {
         const features = this.reorder();
 
         for (const featureId of features) {
