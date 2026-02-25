@@ -1,6 +1,6 @@
 {
     "name": "@cordy/electro-cli",
-    "version": "1.2.20",
+    "version": "1.2.21",
     "description": "CLI for @cordy/electro — dev server, build, and code generation commands",
     "license": "MIT",
     "type": "module",
@@ -48,18 +48,18 @@
         "prepublishOnly": "bun run build"
     },
     "peerDependencies": {
-        "@cordy/electro": "1.2.19",
-        "electron": ">=40.6.0",
+        "@cordy/electro": "1.2.21",
+        "electron": ">=40.6.1",
         "vite": ">=8.0.0"
     },
     "dependencies": {
-        "@cordy/electro-generator": "1.2.19"
+        "@cordy/electro-generator": "1.2.21"
     },
     "devDependencies": {
         "@cordy/electro": "workspace:*",
         "@types/node": "^25.3.0",
         "cac": "^6.7.14",
-        "electron": "^40.6.0",
+        "electron": "^40.6.1",
         "magic-string": "^0.30.21",
         "tsdown": "^0.20.3",
         "vite": "^8.0.0-beta.15"

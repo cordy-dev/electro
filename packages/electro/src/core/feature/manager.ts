@@ -18,7 +18,7 @@ export class FeatureManager {
     constructor(
         private logger: LoggerContext,
         private eventBus: EventBus | undefined = undefined,
-    ) {}
+    ) { }
 
     /** @internal Set the window manager (called by Runtime before bootstrap). */
     setWindowManager(windowManager: WindowManager): void {
@@ -56,7 +56,7 @@ export class FeatureManager {
                 if (owner !== undefined) {
                     throw new Error(
                         `Service "${svc.id}" is already registered by feature "${owner}". ` +
-                            `Feature "${item.id}" cannot claim it — service IDs must be globally unique.`,
+                        `Feature "${item.id}" cannot claim it — service IDs must be globally unique.`,
                     );
                 }
             }
@@ -67,7 +67,7 @@ export class FeatureManager {
                 if (owner !== undefined) {
                     throw new Error(
                         `Task "${task.id}" is already registered by feature "${owner}". ` +
-                            `Feature "${item.id}" cannot claim it — task IDs must be globally unique.`,
+                        `Feature "${item.id}" cannot claim it — task IDs must be globally unique.`,
                     );
                 }
             }
@@ -96,29 +96,10 @@ export class FeatureManager {
     }
 
     /**
-     * Bootstrap all features in dependency order.
-     * Calls initialize -> activate on each feature.
-     * The feature receives a context built externally (by Runtime).
-     */
-    public async bootstrap(): Promise<void> {
-        const order = this.reorder();
-
-        // Phase 1: Initialize
-        for (const id of order) {
-            await this.initialize(id);
-        }
-
-        // Phase 2: Activate
-        for (const id of order) {
-            await this.activate(id);
-        }
-    }
-
-    /**
      * Initialize a feature.
      * Initializes the feature and sets its state to "ready" or "error".
      */
-    private async initialize(id: FeatureId): Promise<void> {
+    public async initialize(id: FeatureId): Promise<void> {
         const feature = this.registry.get(id);
         if (feature?.status !== FeatureStatus.REGISTERED) return;
 
@@ -155,7 +136,7 @@ export class FeatureManager {
      * @param id The ID of the feature to activate.
      * @param allowRetry When true, ERROR state features can be retried (used by enable()).
      */
-    private async activate(id: FeatureId, allowRetry = false): Promise<void> {
+    public async activate(id: FeatureId, allowRetry = false): Promise<void> {
         const feature = this.registry.get(id)!;
 
         const allowed = allowRetry
@@ -193,7 +174,7 @@ export class FeatureManager {
      * Deactivate a feature.
      * @param id The ID of the feature to deactivate.
      */
-    private async deactivate(id: FeatureId): Promise<void> {
+    public async deactivate(id: FeatureId): Promise<void> {
         const feature = this.registry.get(id)!;
         if (![FeatureStatus.ACTIVATED].includes(feature.status)) return;
 
@@ -249,7 +230,7 @@ export class FeatureManager {
         }
     }
 
-    private reorder(): FeatureId[] {
+    public reorder(): FeatureId[] {
         const sorted: FeatureId[] = [];
         const visited = new Set<FeatureId>();
         const visiting = new Set<FeatureId>();

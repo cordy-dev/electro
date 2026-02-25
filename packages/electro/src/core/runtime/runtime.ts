@@ -95,8 +95,18 @@ export class Runtime {
         this.state.transition(RuntimeState.STARTING);
         try {
             this.eventBridge?.start();
-            await this.featureManager.bootstrap();
+            const features = this.featureManager.reorder();
+
+            for (const featureId of features) {
+                await this.featureManager.initialize(featureId);
+            }
+
             await this.ipcBridge?.start();
+
+            for (const featureId of features) {
+                await this.featureManager.activate(featureId);
+            }
+
             this.state.transition(RuntimeState.RUNNING);
         } catch (err) {
             this.ipcBridge?.stop();
